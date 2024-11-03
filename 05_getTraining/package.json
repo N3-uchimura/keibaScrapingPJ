@@ -1,0 +1,26 @@
+{
+  "name": "gettrainint",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "npm run exec",
+    "exec": "ts-node index.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "puppeteer": "^23.6.1",
+    "xlsx": "file:vendor/xlsx-0.20.3.tgz"
+  },
+  "main": "app.ts",
+  "devDependencies": {
+    "@types/node": "^17.0.14",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^3.12.0",
+    "typescript": "^4.5.5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

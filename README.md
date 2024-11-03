@@ -1,1 +1,18 @@
-# keibaScrapingPj
+## Keiba Scraping Project
+
+### Projects
+1. getShubobaLinks  
+Get all Shuboba links from "種牡馬Profile(http://keiba.no.coocan.jp)"  
+result url list is written out to txt  
+
+2. getShubobaData  
+Get all Shuboba data from each url in /txt to /csv files  
+
+3. getShubobaUrl  
+Get all results of Shuboba's url from "NetKeiba(http://netkeiba.com)"  
+
+4. getCropsData  
+Get all urls of Shuboba's crops results from "NetKeiba(http://netkeiba.com)"  
+
+5. getTraining  
+Get all training data from "NetKeiba(http://netkeiba.com)"  
