@@ -15,6 +15,7 @@ const TARGET_URL: string = 'https://www.netkeiba.com/'; // base url
 //* Modules
 import { app, BrowserWindow, dialog } from 'electron'; // electron
 import * as fs from 'fs'; // fs
+import * as path from 'path'; // path
 import parse from 'csv-parse/lib/sync'; // csv parser
 import stringifySync from 'csv-stringify/lib/sync'; // csv stfingifier
 import iconv from 'iconv-lite'; // text converter
@@ -44,14 +45,6 @@ interface csvDialog {
   filters: FileFilter[]; // filter
 }
 
-// dialog options
-interface dialogOptions {
-  type: string; // dialog type
-  title: string; // header title
-  message: string; // message
-  detail: string; // detail
-};
-
 // tmp records
 interface parseRecords {
   columns: boolean; // columns
@@ -66,7 +59,7 @@ interface Csvheaders {
 
 //* General variables
 let mainWindow: any = null; // main window
-let resultArray: any[][] = []; // result array
+let resultArray: any[] = []; // result array
 
 // scraper
 const scraper = new Scrape();
@@ -169,11 +162,20 @@ app.on('ready', async () => {
 
     // Electron window
     mainWindow = new BrowserWindow(windowOptions);
-    // main html
-    mainWindow.loadURL('file://' + __dirname + '/index.html');
 
     // file reading
     const filename = await getFilename();
+
+    // output dir
+    const outputDirPath: string = path.join(__dirname, 'output');
+    // if exists make dir
+    if (!fs.existsSync(outputDirPath)) {
+      fs.promises.mkdir(outputDirPath).then((): void => {
+        console.log('Directory created successfully');
+      }).catch((): void => {
+        console.log('failed to create directory');
+      });
+    }
 
     // read file
     fs.readFile(filename, async (err: any, data: any) => {
@@ -202,8 +204,8 @@ app.on('ready', async () => {
 
       // goto page
       await scraper.doGo(TARGET_URL);
-      // waitfor loading
-      await scraper.doWaitSelector('.Txt_Form', 30000);
+      // wait for loading
+      await scraper.doWaitFor(3000);
 
       // loop words
       for (const rd of records) {
@@ -215,18 +217,18 @@ app.on('ready', async () => {
           // wait for loading
           await scraper.doWaitFor(2000);
           // get urls
-          const tmpUrl = await scraper.getUrl()
-          console.log(`${rd}: ${tmpUrl}`);
+          const tmpUrl = await scraper.getUrl();
+          // url exists
+          if (tmpUrl && tmpUrl != '') {
+            resultArray.push({ a: rd, b: tmpUrl.replace('https://db.netkeiba.com/horse/', '') });
+          }
 
         } catch (e: unknown) {
-          // show error
           console.log(e);
           // goto page
           await scraper.doGo(TARGET_URL);
-          // waitfor loading
-          await scraper.doWaitSelector('.Txt_Form', 30000);
-        } finally {
-          console.log(`no data`);
+          // wait for loading
+          await scraper.doWaitFor(3000);
         }
       }
 

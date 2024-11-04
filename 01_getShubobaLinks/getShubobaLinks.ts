@@ -9,29 +9,41 @@ const FOREIGN_URL: string = 'a-z'; // target url
 
 // read modules
 import * as fs from 'fs'; // fs
+import * as path from 'path'; // path
 import { Scrape } from './class/Scrape0804'; // scraper
 
 // scraper
 const scraper = new Scrape();
 
 // number array
-const makeNumberRange = (start: number, end: number) => [...new Array(end - start).keys()].map(n => n + start);
+const makeNumberRange = (start: number, end: number): number[] => [...new Array(end - start).keys()].map(n => n + start);
 
 // main
 (async (): Promise<void> => {
   try {
-    // urls
-    let urlArray: string[] = [];
+    // texts
+    let urlArray: string[][] = [];
     // url texts
-    let urlTxtArray: string[] = [];
+    let urlTxtArray: string[][] = [];
+    // txt dir
+    const txtDirPath: string = path.join(__dirname, 'txt');
+
+    // if exists make dir
+    if (!fs.existsSync(txtDirPath)) {
+      fs.promises.mkdir(txtDirPath).then((): void => {
+        console.log('Directory created successfully');
+      }).catch((): void => {
+        console.log('failed to create directory');
+      });
+    }
+
     // initialize
     await scraper.init();
     // scraping loop
-    /*for await (const i of makeNumberRange(1, 10)) {
+    for await (const i of makeNumberRange(1, 10)) {
       try {
-        // filename
-        const fileName: string = String(i).padStart(2, '0');
-        const fileTxtName: string = String(i).padStart(2, '0') + "_txt";
+        // texts
+        let tmpUrlArray: string[] = [];
         // tmp url
         const tmpUrl: string = BASE_URL + String(i).padStart(2, '0') + '.html';
         // goto page
@@ -39,33 +51,21 @@ const makeNumberRange = (start: number, end: number) => [...new Array(end - star
         // wait
         await scraper.doWaitFor(1000);
         // get data
-        urlArray = await scraper.doMultiEval('a', 'href');
-        // get url text
-        urlTxtArray = await scraper.doMultiEval('a', 'textContent');
+        tmpUrlArray = await scraper.doMultiEval('a', 'href');
         // delete top data
-        urlArray.shift();
-        urlTxtArray.shift();
+        tmpUrlArray.shift();
         // delete bottom data
-        urlArray.pop();
-        urlTxtArray.pop();
-        // combined data
-        const urlStr: string = urlArray.join("\n");
-        // combined data
-        const txtStr: string = urlTxtArray.join("\n");
-        // write file
-        await fs.promises.writeFile(`./txt/${fileName}.txt`, urlStr)
-        // write file
-        await fs.promises.writeFile(`./txt/${fileTxtName}.txt`, txtStr)
+        tmpUrlArray.pop();
+        // add to two-dimentional array
+        urlArray.push(tmpUrlArray);
 
       } catch (e) {
         console.log(e);
       }
-
     }
-      */
+
     // filename
     const fileName: string = FOREIGN_URL;
-    const fileTxtName: string = FOREIGN_URL + "_txt";
     // tmp url
     const foreignUrl: string = BASE_URL + FOREIGN_URL + '.html';
     // goto page
@@ -73,22 +73,21 @@ const makeNumberRange = (start: number, end: number) => [...new Array(end - star
     // wait
     await scraper.doWaitFor(1000);
     // get data
-    urlArray = await scraper.doMultiEval('a', 'href');
-    // get url text
-    urlTxtArray = await scraper.doMultiEval('a', 'textContent');
+    const foreignUrlArray: string[] = await scraper.doMultiEval('a', 'href');
+    // add to two-dimentional array
+    urlArray.push(foreignUrlArray);
+    // final array
+    const finalUrlArray: string[] = urlArray.flat();
+    // delete last one
+    finalUrlArray.pop();
     // combined data
-    const urlStr: string = urlArray.join("\n");
-    // combined data
-    const txtStr: string = urlTxtArray.join("\n");
+    const urlStr: string = finalUrlArray.join("\n");
     // write file
     await fs.promises.writeFile(`./txt/${fileName}.txt`, urlStr)
-    // write file
-    await fs.promises.writeFile(`./txt/${fileTxtName}.txt`, txtStr)
     // close browser
     await scraper.doClose();
 
   } catch (e) {
     console.log(e);
   }
-
 })();

@@ -2,5 +2,4 @@
 .env
 package-lock.json
 /public/output/
-/txt/
-/csv/
+/csv/*

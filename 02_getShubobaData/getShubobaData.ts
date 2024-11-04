@@ -8,6 +8,7 @@
 
 // read modules
 import * as fs from 'fs'; // fs
+import * as path from 'path'; // path
 import readline from 'readline'; // readline
 import readlineSync from 'readline-sync'; // readsync
 import { Scrape } from './class/Scrape0804'; // scraper
@@ -107,6 +108,26 @@ const listFiles = (): Promise<string[]> => {
     const selectorArray: string[] = ['title', 'table tr:nth-child(1) td', 'table tr:nth-child(2) td', 'table tr:nth-child(3)  td', 'table tr:nth-child(4) td', 'table tr:nth-child(8) td', 'table tr:nth-child(12) td', 'table tr:nth-child(13) td', 'table tr:nth-child(14) td', 'table tr:nth-child(15) td', 'table tr:nth-child(23) td', 'table tr:nth-child(24) td'];
     // links
     const linkArray: string[] = await readLines();
+    // txt dir
+    const txtDirPath: string = path.join(__dirname, 'txt');
+    // if exists make dir
+    if (!fs.existsSync(txtDirPath)) {
+      fs.promises.mkdir(txtDirPath).then((): void => {
+        console.log('Directory created successfully');
+      }).catch((): void => {
+        console.log('failed to create directory');
+      });
+    }
+    // csv dir
+    const csvDirPath: string = path.join(__dirname, 'csv');
+    // if exists make dir
+    if (!fs.existsSync(csvDirPath)) {
+      fs.promises.mkdir(csvDirPath).then((): void => {
+        console.log('Directory created successfully');
+      }).catch((): void => {
+        console.log('failed to create directory');
+      });
+    }
 
     // initialize
     await scraper.init();

@@ -24,13 +24,6 @@ import { setTimeout } from 'node:timers/promises'; // wait for seconds
 import puppeteer from "puppeteer"; // Puppeteer for scraping
 
 //* Interfaces
-// puppeteer options
-interface puppOption {
-  headless: boolean; // display mode
-  ignoreDefaultArgs: string[]; // ignore extensions
-  args: string[]; // args
-}
-
 // class
 export class Scrape {
   static browser: any; // static browser
@@ -51,9 +44,10 @@ export class Scrape {
   init(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        const puppOptions: puppOption = {
-          headless: false, // no display mode
-          ignoreDefaultArgs: [DISABLE_EXTENSIONS], // ignore extensions
+        const puppOptions: any = {
+          headless: true, // no display mode
+          ignoreDefaultArgs: [], // ignore extensions
+          /*
           args: [
             NO_SANDBOX,
             DISABLE_SANDBOX,
@@ -65,6 +59,7 @@ export class Scrape {
             IGNORE_CERT_ERROR,
             MAX_SCREENSIZE,
           ], // args
+          */
         };
         // lauch browser
         Scrape.browser = await puppeteer.launch(puppOptions);
@@ -343,33 +338,20 @@ export class Scrape {
   doSingleEval(selector: string, property: string): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
-        // target item
-        const exists: boolean = await Scrape.page.$eval(selector, () => true).catch(() => false);
+        // target value
+        const item: any = await Scrape.page.$(selector);
 
-        // no result
-        if (!exists) {
-          console.log("error");
-          reject("error");
+        // if not null
+        if (item !== null) {
+          // got data
+          const data: string = await (
+            await item.getProperty(property)
+          ).jsonValue();
 
-        } else {
-          // target value
-          const item: any = await Scrape.page.$(selector);
-
-          // if not null
-          if (item !== null) {
-            // got data
-            const data: string = await (
-              await item.getProperty(property)
-            ).jsonValue();
-
-            // if got data not null
-            if (data) {
-              // resolved
-              resolve(data);
-
-            } else {
-              reject("error");
-            }
+          // if got data not null
+          if (data) {
+            // resolved
+            resolve(data);
 
           } else {
             reject("error");

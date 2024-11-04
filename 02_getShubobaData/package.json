@@ -1,7 +1,7 @@
 {
   "name": "numthree.com.getshubobadata",
   "productName": "getShubobaData",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "application for getshubobadata",
   "main": "getShubobaData.ts",
   "scripts": {

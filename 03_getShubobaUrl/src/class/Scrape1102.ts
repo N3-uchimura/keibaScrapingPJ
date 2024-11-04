@@ -59,7 +59,7 @@ export class Scrape {
     return new Promise(async (resolve, reject) => {
       try {
         const puppOptions: puppOption = {
-          headless: false, // no display mode
+          headless: true, // no display mode
           ignoreDefaultArgs: [DISABLE_EXTENSIONS], // ignore extensions
           args: [
             NO_SANDBOX,

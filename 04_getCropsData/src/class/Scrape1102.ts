@@ -3,7 +3,7 @@
  *
  * class：Scrape
  * function：scraping site
- * updated: 2024/08/04
+ * updated: 2024/11/02
  **/
 
 // constants
@@ -94,6 +94,25 @@ export class Scrape {
           console.log(`init: ${e.message}`);
           // reject
           reject();
+        }
+      }
+    });
+  }
+
+  // get page url
+  getUrl(): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // resolved
+        resolve(await Scrape.page.evaluate(() => document.location.href));
+
+      } catch (e: unknown) {
+        // if type is error
+        if (e instanceof Error) {
+          // error
+          console.log(`getTitle: ${e.message}`);
+          // reject
+          reject(e.message);
         }
       }
     });

@@ -1,5 +1,5 @@
 /**
-/* main.js
+/* UrlGetterKeiba.ts
 /* UrlGetterKeiba - Getting horse url -
 **/
 "use strict";
@@ -39,11 +39,11 @@ const TARGET_URL = 'https://www.netkeiba.com/'; // base url
 //* Modules
 const electron_1 = require("electron"); // electron
 const fs = __importStar(require("fs")); // fs
+const path = __importStar(require("path")); // path
 const sync_1 = __importDefault(require("csv-parse/lib/sync")); // csv parser
 const sync_2 = __importDefault(require("csv-stringify/lib/sync")); // csv stfingifier
 const iconv_lite_1 = __importDefault(require("iconv-lite")); // text converter
 const Scrape1102_1 = require("./class/Scrape1102"); // custom Scraper
-;
 //* General variables
 let mainWindow = null; // main window
 let resultArray = []; // result array
@@ -139,10 +139,18 @@ electron_1.app.on('ready', async () => {
         };
         // Electron window
         mainWindow = new electron_1.BrowserWindow(windowOptions);
-        // main html
-        mainWindow.loadURL('file://' + __dirname + '/index.html');
         // file reading
         const filename = await getFilename();
+        // output dir
+        const outputDirPath = path.join(__dirname, 'output');
+        // if exists make dir
+        if (!fs.existsSync(outputDirPath)) {
+            fs.promises.mkdir(outputDirPath).then(() => {
+                console.log('Directory created successfully');
+            }).catch(() => {
+                console.log('failed to create directory');
+            });
+        }
         // read file
         fs.readFile(filename, async (err, data) => {
             // variable
@@ -166,8 +174,8 @@ electron_1.app.on('ready', async () => {
             const records = tmpRecords.map(item => item[0]);
             // goto page
             await scraper.doGo(TARGET_URL);
-            // waitfor loading
-            await scraper.doWaitSelector('.Txt_Form', 30000);
+            // wait for loading
+            await scraper.doWaitFor(3000);
             // loop words
             for (const rd of records) {
                 try {
@@ -179,18 +187,17 @@ electron_1.app.on('ready', async () => {
                     await scraper.doWaitFor(2000);
                     // get urls
                     const tmpUrl = await scraper.getUrl();
-                    console.log(`${rd}: ${tmpUrl}`);
+                    // url exists
+                    if (tmpUrl && tmpUrl != '') {
+                        resultArray.push({ a: rd, b: tmpUrl.replace('https://db.netkeiba.com/horse/', '') });
+                    }
                 }
                 catch (e) {
-                    // show error
                     console.log(e);
                     // goto page
                     await scraper.doGo(TARGET_URL);
-                    // waitfor loading
-                    await scraper.doWaitSelector('.Txt_Form', 30000);
-                }
-                finally {
-                    console.log(`no data`);
+                    // wait for loading
+                    await scraper.doWaitFor(3000);
                 }
             }
             // stringify option

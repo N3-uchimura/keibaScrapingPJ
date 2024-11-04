@@ -36,7 +36,7 @@ const WINDOW_HEIGHT = 1000; // window height
 const DEFAULT_ENCODING = 'utf8'; // encoding
 const CSV_ENCODING = 'Shift_JIS'; // csv encoding
 const TARGET_URL = 'https://db.netkeiba.com/horse/sire/'; // base url
-const BASE_SELECTOR = '#contents > div.db_main_deta > table > tbody > tr:nth-child(3) >'; // base
+const BASE_SELECTOR = '#contents > div > table > tbody > tr:nth-child(3) >'; // base
 const TURF_SELECTOR = `${BASE_SELECTOR} td:nth-child(13) > a`; // turf
 const TURF_WIN_SELECTOR = `${BASE_SELECTOR} td:nth-child(14) > a`; // turf win
 const DIRT_SELECTOR = `${BASE_SELECTOR} td:nth-child(15) > a`; // dirt
@@ -46,10 +46,11 @@ const DIRT_DIST_SELECTOR = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average 
 //* Modules
 const electron_1 = require("electron"); // electron
 const fs = __importStar(require("fs")); // fs
+const path = __importStar(require("path")); // path
 const sync_1 = __importDefault(require("csv-parse/lib/sync")); // csv parser
 const sync_2 = __importDefault(require("csv-stringify/lib/sync")); // csv stfingifier
 const iconv_lite_1 = __importDefault(require("iconv-lite")); // Ttext converter
-const Scrape0804_1 = require("./class/Scrape0804"); // scraper
+const Scrape1102_1 = require("./class/Scrape1102"); // scraper
 //* General variables
 // main window
 let mainWindow = null;
@@ -57,18 +58,10 @@ let mainWindow = null;
 let resultArray = [];
 // selector array
 const selectorArray = [TURF_SELECTOR, TURF_WIN_SELECTOR, DIRT_SELECTOR, DIRT_WIN_SELECTOR, TURF_DIST_SELECTOR, DIRT_DIST_SELECTOR];
-// header array
-const headerObjArray = [
-    { key: 'a', header: 'horse' },
-    { key: 'b', header: 'turf' },
-    { key: 'c', header: 'turf win' },
-    { key: 'd', header: 'dirt' },
-    { key: 'e', header: 'dirt win' },
-    { key: 'f', header: 'turf distanse' },
-    { key: 'g', header: 'turf distanse' } // dirt average distance
-];
+// horse array
+const horseDataArray = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
 // scraper
-const scraper = new Scrape0804_1.Scrape();
+const scraper = new Scrape1102_1.Scrape();
 // main
 electron_1.app.on('ready', async () => {
     // window options
@@ -82,8 +75,16 @@ electron_1.app.on('ready', async () => {
     };
     // Electron window
     mainWindow = new electron_1.BrowserWindow(windowOptions);
-    // main html
-    mainWindow.loadURL('file://' + __dirname + '/index.html');
+    // output dir
+    const outputDirPath = path.join(__dirname, 'output');
+    // if exists make dir
+    if (!fs.existsSync(outputDirPath)) {
+        fs.promises.mkdir(outputDirPath).then(() => {
+            console.log('Directory created successfully');
+        }).catch(() => {
+            console.log('failed to create directory');
+        });
+    }
     // csv file dialog
     const promise = new Promise((resolve, reject) => {
         // get csv
@@ -124,7 +125,7 @@ electron_1.app.on('ready', async () => {
                 const formattedDate = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
                 // options
                 const recordOptions = {
-                    columns: ['urls', 'horse'],
+                    columns: ['horse', 'urls'],
                     from_line: 2, // from line 2
                 };
                 // csv reading
@@ -134,42 +135,68 @@ electron_1.app.on('ready', async () => {
                 const horses = tmpRecords.map(item => item.horse);
                 // loop words
                 for (let i = 0; i < urls.length; i++) {
-                    // empty array
-                    let tmpArray = [];
-                    // insert horse name
-                    tmpArray.push(horses[i]);
-                    // goto page
-                    await scraper.doGo(TARGET_URL + urls[i]);
-                    console.log(`goto ${TARGET_URL + urls[i]}`);
-                    // get data
-                    for (const sl of selectorArray) {
-                        try {
-                            if (await scraper.doCheckSelector('.race_table_01')) {
-                                // wait for selector
-                                await scraper.doWaitSelector('.race_table_01', 1000);
-                                // acquired data
-                                const scrapedData = await scraper.doSingleEval(sl, 'textContent');
-                                // data exists
-                                if (scrapedData != '') {
-                                    tmpArray.push(scrapedData);
+                    try {
+                        // empty array
+                        let tmpObj = {
+                            horse: '',
+                            turf: '',
+                            turfwin: '',
+                            dirt: '',
+                            dirtwin: '',
+                            turfdistanse: '',
+                            dirtdistanse: '', // dirt average distance
+                        };
+                        // insert horse name
+                        tmpObj.horse = horses[i];
+                        // goto page
+                        await scraper.doGo(TARGET_URL + urls[i]);
+                        console.log(`goto ${TARGET_URL + urls[i]}`);
+                        // wait for selector
+                        await scraper.doWaitFor(3000);
+                        // get data
+                        for (let j = 0; j < selectorArray.length; j++) {
+                            try {
+                                if (await scraper.doCheckSelector(selectorArray[j])) {
+                                    // wait for selector
+                                    await scraper.doWaitFor(200);
+                                    // acquired data
+                                    const scrapedData = await scraper.doSingleEval(selectorArray[j], 'textContent');
+                                    // data exists
+                                    if (scrapedData != '') {
+                                        tmpObj[horseDataArray[j]] = scrapedData;
+                                    }
+                                    // wait for 100ms
+                                    await scraper.doWaitFor(200);
                                 }
-                                // wait for 100ms
-                                await scraper.doWaitFor(100);
-                                // push into final array
-                                resultArray.push(tmpArray);
-                                // wait for 100ms
-                                scraper.doWaitFor(100);
+                                else {
+                                    console.log('no selector');
+                                }
+                            }
+                            catch (e) {
+                                console.log(e);
                             }
                         }
-                        catch (e) {
-                            console.log(e);
-                        }
+                        console.log(tmpObj);
+                        resultArray.push(tmpObj);
+                    }
+                    catch (e) {
+                        console.log(e);
                     }
                 }
+                console.log(resultArray);
+                const csvHeadObj = {
+                    horse: 'horse',
+                    turf: 'turf',
+                    turfwin: 'turfwin',
+                    dirt: 'dirt',
+                    dirtwin: 'dirtwin',
+                    turfdistanse: 'turfdistanse',
+                    dirtdistanse: 'dirtdistanse', // dirt distanse
+                };
                 // stringify option
                 const stringifyOptions = {
                     header: true,
-                    columns: headerObjArray,
+                    columns: csvHeadObj,
                 };
                 // export csv
                 const csvString = (0, sync_2.default)(resultArray, stringifyOptions);

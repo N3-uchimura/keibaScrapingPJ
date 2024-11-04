@@ -11,21 +11,21 @@ const WINDOW_HEIGHT: number = 1000; // window height
 const DEFAULT_ENCODING: string = 'utf8'; // encoding
 const CSV_ENCODING: string = 'Shift_JIS'; // csv encoding
 const TARGET_URL: string = 'https://db.netkeiba.com/horse/sire/'; // base url
-const BASE_SELECTOR: string = '#contents > div.db_main_deta > table > tbody > tr:nth-child(3) >'; // base
+const BASE_SELECTOR: string = '#contents > div > table > tbody > tr:nth-child(3) >'; // base
 const TURF_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(13) > a`; // turf
 const TURF_WIN_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(14) > a`; // turf win
 const DIRT_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(15) > a`; // dirt
 const DIRT_WIN_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(16) > a`; // dirt win
 const TURF_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(20)`; // turf average distance
 const DIRT_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average distance
-
 //* Modules
 import { app, BrowserWindow, dialog, MessageBoxOptions } from 'electron'; // electron
 import * as fs from 'fs'; // fs
+import * as path from 'path'; // path
 import parse from 'csv-parse/lib/sync'; // csv parser
 import stringifySync from 'csv-stringify/lib/sync'; // csv stfingifier
 import iconv from 'iconv-lite'; // Ttext converter
-import { Scrape } from './class/Scrape0804'; // scraper
+import { Scrape } from './class/Scrape1102'; // scraper
 import { FileFilter } from 'electron/main'; // file filter
 
 //* interfaces
@@ -46,7 +46,7 @@ interface parseRecords {
 // csv stringify option
 interface csvStringify {
   header: boolean; // header
-  columns: csvHeaders[]; // columns
+  columns: csvHeaders; // columns
 }
 
 // csv dialog option
@@ -63,29 +63,27 @@ interface csvRecords {
   horse: string; // horse name
 }
 
-// csv headers
+// headers
 interface csvHeaders {
-  key: string; // key
-  header: string; // header
+  horse: string; // horse name
+  turf: string; // turf
+  turfwin: string; // urf win
+  dirt: string; // dirt
+  dirtwin: string; // dirt win
+  turfdistanse: string; // turf distanse
+  dirtdistanse: string; // dirt distanse
 }
 
 //* General variables
 // main window
 let mainWindow: any = null;
 // result array
-let resultArray: Object[][] = [];
+let resultArray: any[] = [];
 // selector array
 const selectorArray: string[] = [TURF_SELECTOR, TURF_WIN_SELECTOR, DIRT_SELECTOR, DIRT_WIN_SELECTOR, TURF_DIST_SELECTOR, DIRT_DIST_SELECTOR];
-// header array
-const headerObjArray: csvHeaders[] = [
-  { key: 'a', header: 'horse' }, // horse name
-  { key: 'b', header: 'turf' }, // turf ratio
-  { key: 'c', header: 'turf win' }, // turf win
-  { key: 'd', header: 'dirt' },  // dirt ratio
-  { key: 'e', header: 'dirt win' }, // dirt win
-  { key: 'f', header: 'turf distanse' }, // turf average distance
-  { key: 'g', header: 'turf distanse' } // dirt average distance
-];
+
+// horse array
+const horseDataArray: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
 
 // scraper
 const scraper = new Scrape();
@@ -103,8 +101,17 @@ app.on('ready', async () => {
   }
   // Electron window
   mainWindow = new BrowserWindow(windowOptions);
-  // main html
-  mainWindow.loadURL('file://' + __dirname + '/index.html');
+
+  // output dir
+  const outputDirPath: string = path.join(__dirname, 'output');
+  // if exists make dir
+  if (!fs.existsSync(outputDirPath)) {
+    fs.promises.mkdir(outputDirPath).then((): void => {
+      console.log('Directory created successfully');
+    }).catch((): void => {
+      console.log('failed to create directory');
+    });
+  }
 
   // csv file dialog
   const promise: Promise<string> = new Promise((resolve, reject) => {
@@ -150,7 +157,7 @@ app.on('ready', async () => {
 
         // options
         const recordOptions: parseRecords = {
-          columns: ['urls', 'horse'], // column
+          columns: ['horse', 'urls'], // column
           from_line: 2, // from line 2
         }
         // csv reading
@@ -161,47 +168,75 @@ app.on('ready', async () => {
 
         // loop words
         for (let i: number = 0; i < urls.length; i++) {
-          // empty array
-          let tmpArray: string[] = [];
+          try {
+            // empty array
+            let tmpObj: any = {
+              horse: '', // horse name
+              turf: '', // turf ratio
+              turfwin: '', // turf win
+              dirt: '', // dirt ratio
+              dirtwin: '', // dirt win
+              turfdistanse: '', // turf average distance
+              dirtdistanse: '', // dirt average distance
+            };
 
-          // insert horse name
-          tmpArray.push(horses[i]);
+            // insert horse name
+            tmpObj.horse = horses[i];
 
-          // goto page
-          await scraper.doGo(TARGET_URL + urls[i]);
-          console.log(`goto ${TARGET_URL + urls[i]}`);
+            // goto page
+            await scraper.doGo(TARGET_URL + urls[i]);
+            console.log(`goto ${TARGET_URL + urls[i]}`);
+            // wait for selector
+            await scraper.doWaitFor(3000);
 
-          // get data
-          for (const sl of selectorArray) {
-            try {
-              if (await scraper.doCheckSelector('.race_table_01')) {
-                // wait for selector
-                await scraper.doWaitSelector('.race_table_01', 1000);
-                // acquired data
-                const scrapedData: string = await scraper.doSingleEval(sl, 'textContent');
+            // get data
+            for (let j: number = 0; j < selectorArray.length; j++) {
+              try {
+                if (await scraper.doCheckSelector(selectorArray[j])) {
+                  // wait for selector
+                  await scraper.doWaitFor(200);
+                  // acquired data
+                  const scrapedData: string = await scraper.doSingleEval(selectorArray[j], 'textContent');
 
-                // data exists
-                if (scrapedData != '') {
-                  tmpArray.push(scrapedData);
+                  // data exists
+                  if (scrapedData != '') {
+                    tmpObj[horseDataArray[j]] = scrapedData;
+                  }
+                  // wait for 100ms
+                  await scraper.doWaitFor(200);
+
+                } else {
+                  console.log('no selector');
                 }
-                // wait for 100ms
-                await scraper.doWaitFor(100);
-                // push into final array
-                resultArray.push(tmpArray);
-                // wait for 100ms
-                scraper.doWaitFor(100);
-              }
 
-            } catch (e: unknown) {
-              console.log(e);
+              } catch (e: unknown) {
+                console.log(e);
+              }
             }
+            console.log(tmpObj);
+            resultArray.push(tmpObj);
+
+          } catch (e: unknown) {
+            console.log(e);
           }
         }
 
+        console.log(resultArray);
+
+        const csvHeadObj: csvHeaders = {
+          horse: 'horse', // horse name
+          turf: 'turf',// turf
+          turfwin: 'turfwin',// urf win
+          dirt: 'dirt', // dirt
+          dirtwin: 'dirtwin', // dirt win
+          turfdistanse: 'turfdistanse', // turf distanse
+          dirtdistanse: 'dirtdistanse', // dirt distanse
+        }
+
         // stringify option
-        const stringifyOptions: csvStringify = {
+        const stringifyOptions: any = {
           header: true, // head mode
-          columns: headerObjArray,
+          columns: csvHeadObj,
         }
         // export csv
         const csvString: string = stringifySync(resultArray, stringifyOptions);
