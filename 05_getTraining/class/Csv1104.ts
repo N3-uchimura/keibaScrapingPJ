@@ -7,9 +7,9 @@
  **/
 
 // define modules
-import { parse } from 'csv-parse/sync'; // csv parser
 import { promises } from "fs"; // file system
 import iconv from 'iconv-lite'; // encoding
+import { parse } from 'csv-parse/sync'; // csv parser
 import { stringify } from 'csv-stringify/sync'; // csv stringify
 
 // file system definition

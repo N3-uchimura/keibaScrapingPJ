@@ -1,7 +1,7 @@
 /**
  * getTraining.ts
  *
- * function：Node.js server
+ * function：get Netkeiba Training Data
  **/
 
 'use strict';
@@ -16,13 +16,14 @@ const OUTPUT_PATH: string = './output/'; // output path
 import * as dotenv from 'dotenv'; // dotenc
 dotenv.config(); // dotenv
 import { Scrape } from './class/Scrape1103'; // scraper
-import CSV from './class/Csv1104'; // aggregator
+import CSV from './class/Csv1104'; // csv
 
-// aggregator
+// csv
 const csvMaker = new CSV('SJIS');
 
 // active course ID
 const activeId: string = '202403030410';
+// racing course
 const activeCourseName: string = '福島';
 
 // netkeiba id
@@ -30,7 +31,7 @@ const netKeibaId: string = process.env.NETKEIBA_ID ?? '';
 // netkeiba pass
 const netKeibaPass: string = process.env.NETKEIBA_PASS ?? '';
 
-// scraper
+// scraper instance
 const scraper = new Scrape();
 
 // main
@@ -123,9 +124,9 @@ const scraper = new Scrape();
         }
         // put into wholearray
         wholeArray.push(finalArray);
+        // wait 0.5 sec
         await scraper.doWaitFor(500);
 
-        // close browser
         console.log(`${raceName} finished`);
 
       } catch (err2: unknown) {
@@ -156,6 +157,7 @@ const scraper = new Scrape();
     let finalJsonArray: any[] = [];
     // all races
     wholeArray.forEach((races: any) => {
+      // for training
       races.forEach((data: any) => {
         // empty array
         let tmpObj: { [key: string]: string } = {
@@ -196,8 +198,7 @@ const scraper = new Scrape();
         // set to json
         finalJsonArray.push(tmpObj);
       });
-    })
-
+    });
     // write data
     await csvMaker.makeCsvData(finalJsonArray, columns, filePath);
     // close browser

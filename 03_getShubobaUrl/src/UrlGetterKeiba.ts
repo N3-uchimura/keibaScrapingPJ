@@ -9,18 +9,17 @@
 const WINDOW_WIDTH: number = 1000; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
 const DEFAULT_ENCODING: string = 'utf8'; // encoding
-const CSV_ENCODING: string = 'Shift_JIS'; // csv encoding
 const TARGET_URL: string = 'https://www.netkeiba.com/'; // base url
 
 //* Modules
-import { app, BrowserWindow, dialog } from 'electron'; // electron
+import { app, BrowserWindow } from 'electron'; // electron
 import * as fs from 'fs'; // fs
 import * as path from 'path'; // path
-import parse from 'csv-parse/lib/sync'; // csv parser
-import stringifySync from 'csv-stringify/lib/sync'; // csv stfingifier
-import iconv from 'iconv-lite'; // text converter
 import { Scrape } from './class/Scrape1102'; // custom Scraper
-import { FileFilter } from 'electron/main'; // filefilter
+import CSV from './class/ElectronCsv1111'; // aggregator
+
+// aggregator
+const csvMaker = new CSV('SJIS');
 
 //* Interfaces
 // window options
@@ -29,26 +28,6 @@ interface windowOption {
   height: number; // window height
   defaultEncoding: string; // default encode
   webPreferences: Object; // node
-}
-
-// csv stringify option
-interface csvStringify {
-  header: boolean; // header
-  columns: Csvheaders[]; // columns
-}
-
-// csv dialog option
-interface csvDialog {
-  properties: any; // file open
-  title: string; // header title
-  defaultPath: string; // default path
-  filters: FileFilter[]; // filter
-}
-
-// tmp records
-interface parseRecords {
-  columns: boolean; // columns
-  from_line: number; // line start
 }
 
 // csv headers
@@ -70,83 +49,6 @@ const headerObjArray: Csvheaders[] = [
   { key: 'b', header: 'url' }, // url
 ];
 
-// choose csv data
-const getCsvData = (): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    // options
-    const dialogOptions: csvDialog = {
-      properties: ['openFile'], // file open
-      title: 'choose csv file', // header title
-      defaultPath: '.', // default path
-      filters: [
-        { name: 'csv(Shif-JIS)', extensions: ['csv'] } // filter
-      ],
-    }
-    // show file dialog
-    dialog.showOpenDialog(mainWindow, dialogOptions).then((result: any) => {
-      // file exists
-      if (result.filePaths.length > 0) {
-        // resolved
-        resolve(result.filePaths);
-
-        // no file
-      } else {
-        // rejected
-        reject(result.canceled);
-      }
-
-    }).catch((err: unknown) => {
-      // error
-      console.log(`error occured ${err}`);
-      // rejected
-      reject(err);
-    });
-  });
-}
-
-// show dialog
-const showDialog = (title: any, message: any, detail: any, flg: boolean = false) => {
-  // dialog options
-  const options: any = {
-    type: '',
-    title: title,
-    message: message,
-    detail: detail.toString(),
-  };
-
-  // error or not
-  if (flg) {
-    options.type = 'error';
-
-  } else {
-    options.type = 'info';
-  }
-
-  // show dialog
-  dialog.showMessageBox(options);
-}
-
-// csv file dialog
-const getFilename = (): Promise<string> => {
-  return new Promise(async (resolve, reject) => {
-    // get csv
-    getCsvData()
-      // success
-      .then(res => {
-        const filename: string = res[0];
-        // resolved
-        resolve(filename);
-      })
-      // error
-      .catch(err => {
-        // show error dialog
-        showDialog('no file', 'no csv file selected.', err, true);
-        // reject
-        reject(new Error('no file error'));
-      });
-  });
-}
-
 // main
 app.on('ready', async () => {
   try {
@@ -159,12 +61,8 @@ app.on('ready', async () => {
         nodeIntegration: false, // node
       }
     }
-
     // Electron window
     mainWindow = new BrowserWindow(windowOptions);
-
-    // file reading
-    const filename = await getFilename();
 
     // output dir
     const outputDirPath: string = path.join(__dirname, 'output');
@@ -176,79 +74,53 @@ app.on('ready', async () => {
         console.log('failed to create directory');
       });
     }
+    // file reading
+    const filename: string = await csvMaker.showCSVDialog(mainWindow);
+    // get data
+    const tmpRecords: any = await csvMaker.getCsvData(filename);
+    // horse names
+    const records: string[] = tmpRecords.map((item: any) => item[0]);
 
-    // read file
-    fs.readFile(filename, async (err: any, data: any) => {
-      // variable
-      let tmpRecords: string[] = [];
-      // initialize
-      await scraper.init();
-      console.log('scraping ..');
+    // goto page
+    await scraper.doGo(TARGET_URL);
+    // wait for loading
+    await scraper.doWaitFor(3000);
 
-      // decoder
-      const str = iconv.decode(data, CSV_ENCODING);
-
-      // error
-      if (err) throw err;
-
-      // record option
-      const recordOptions: parseRecords = {
-        columns: false, // no specified columns
-        from_line: 2, // from line 2
-      }
-      // csv reading
-      tmpRecords = await parse(str, recordOptions);
-
-      // horse names
-      const records: string[] = tmpRecords.map(item => item[0]);
-
-      // goto page
-      await scraper.doGo(TARGET_URL);
-      // wait for loading
-      await scraper.doWaitFor(3000);
-
-      // loop words
-      for (const rd of records) {
-        try {
-          // input word
-          await scraper.doType('.Txt_Form', rd);
-          // click submit button
-          await scraper.doClick('.Submit_Btn');
-          // wait for loading
-          await scraper.doWaitFor(2000);
-          // get urls
-          const tmpUrl = await scraper.getUrl();
-          // url exists
-          if (tmpUrl && tmpUrl != '') {
-            resultArray.push({ a: rd, b: tmpUrl.replace('https://db.netkeiba.com/horse/', '') });
-          }
-
-        } catch (e: unknown) {
-          console.log(e);
-          // goto page
-          await scraper.doGo(TARGET_URL);
-          // wait for loading
-          await scraper.doWaitFor(3000);
+    // loop words
+    for (const rd of records) {
+      try {
+        // input word
+        await scraper.doType('.Txt_Form', rd);
+        // click submit button
+        await scraper.doClick('.Submit_Btn');
+        // wait for loading
+        await scraper.doWaitFor(2000);
+        // get urls
+        const tmpUrl = await scraper.getUrl();
+        // url exists
+        if (tmpUrl && tmpUrl != '') {
+          resultArray.push({ a: rd, b: tmpUrl.replace('https://db.netkeiba.com/horse/', '') });
         }
+
+      } catch (e: unknown) {
+        console.log(e);
+        // goto page
+        await scraper.doGo(TARGET_URL);
+        // wait for loading
+        await scraper.doWaitFor(3000);
       }
-
-      // stringify option
-      const stringifyOptions: csvStringify = {
-        header: true, // head mode
-        columns: headerObjArray,
-      }
-      // export csv
-      const csvString: string = stringifySync(resultArray, stringifyOptions);
-      // format date
-      const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
-
-      // output csv file
-      await fs.promises.writeFile(`output/${formattedDate}.csv`, csvString);
-
-      // close window
-      mainWindow.close();
-
-    });
+    }
+    // stringify option
+    const stringifyOptions: { [key: string]: any } = {
+      header: true, // head mode
+      columns: headerObjArray,
+    }
+    // format date
+    const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
+    // make csv data
+    await csvMaker.makeCsvData(resultArray, stringifyOptions, formattedDate);
+    // close window
+    mainWindow.close();
 
     // closing
     mainWindow.on('closed', () => {
@@ -258,7 +130,6 @@ app.on('ready', async () => {
 
   } catch (e: unknown) {
     // show error dialog
-    showDialog('export error', 'error occured when exporting csv.', e, true);
+    console.log('export error', 'error occured when exporting csv.', e, true);
   }
-
 });

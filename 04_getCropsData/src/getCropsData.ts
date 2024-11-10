@@ -1,6 +1,6 @@
 /**
 /* getCropsData.ts
-/* getCropsData - Getting shuboba crops data. -
+/* getCropsData - Getting shuboba crops data from netkeiba. -
 **/
 
 "use strict";
@@ -9,7 +9,6 @@
 const WINDOW_WIDTH: number = 1000; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
 const DEFAULT_ENCODING: string = 'utf8'; // encoding
-const CSV_ENCODING: string = 'Shift_JIS'; // csv encoding
 const TARGET_URL: string = 'https://db.netkeiba.com/horse/sire/'; // base url
 const BASE_SELECTOR: string = '#contents > div > table > tbody > tr:nth-child(3) >'; // base
 const TURF_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(13) > a`; // turf
@@ -19,14 +18,11 @@ const DIRT_WIN_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(16) > a`; // di
 const TURF_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(20)`; // turf average distance
 const DIRT_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average distance
 //* Modules
-import { app, BrowserWindow, dialog, MessageBoxOptions } from 'electron'; // electron
+import { app, BrowserWindow } from 'electron'; // electron
 import * as fs from 'fs'; // fs
 import * as path from 'path'; // path
-import parse from 'csv-parse/lib/sync'; // csv parser
-import stringifySync from 'csv-stringify/lib/sync'; // csv stfingifier
-import iconv from 'iconv-lite'; // Ttext converter
 import { Scrape } from './class/Scrape1102'; // scraper
-import { FileFilter } from 'electron/main'; // file filter
+import CSV from './class/ElectronCsv1111'; // aggregator
 
 //* interfaces
 // window option
@@ -43,37 +39,6 @@ interface parseRecords {
   from_line: number; // line start
 }
 
-// csv stringify option
-interface csvStringify {
-  header: boolean; // header
-  columns: csvHeaders; // columns
-}
-
-// csv dialog option
-interface csvDialog {
-  properties: any; // file open
-  title: string; // header title
-  defaultPath: string; // default path
-  filters: FileFilter[]; // filter
-}
-
-// records
-interface csvRecords {
-  urls: string; // url
-  horse: string; // horse name
-}
-
-// headers
-interface csvHeaders {
-  horse: string; // horse name
-  turf: string; // turf
-  turfwin: string; // urf win
-  dirt: string; // dirt
-  dirtwin: string; // dirt win
-  turfdistanse: string; // turf distanse
-  dirtdistanse: string; // dirt distanse
-}
-
 //* General variables
 // main window
 let mainWindow: any = null;
@@ -81,12 +46,13 @@ let mainWindow: any = null;
 let resultArray: any[] = [];
 // selector array
 const selectorArray: string[] = [TURF_SELECTOR, TURF_WIN_SELECTOR, DIRT_SELECTOR, DIRT_WIN_SELECTOR, TURF_DIST_SELECTOR, DIRT_DIST_SELECTOR];
-
 // horse array
 const horseDataArray: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
 
 // scraper
 const scraper = new Scrape();
+// aggregator
+const csvMaker = new CSV('SJIS');
 
 // main
 app.on('ready', async () => {
@@ -104,8 +70,9 @@ app.on('ready', async () => {
 
   // output dir
   const outputDirPath: string = path.join(__dirname, 'output');
-  // if exists make dir
+  // if not exists
   if (!fs.existsSync(outputDirPath)) {
+    // make dir
     fs.promises.mkdir(outputDirPath).then((): void => {
       console.log('Directory created successfully');
     }).catch((): void => {
@@ -113,224 +80,89 @@ app.on('ready', async () => {
     });
   }
 
-  // csv file dialog
-  const promise: Promise<string> = new Promise((resolve, reject) => {
-    // get csv
-    getCsvData()
-      // success
-      .then((res: string[]) => {
-        // chosen filename
-        const filename: string = res[0];
-        // resolved
-        resolve(filename);
-      })
+  // chosen filename
+  const filename: string = await csvMaker.showCSVDialog(mainWindow);
+  // read csv file
+  const tmpRecords: any = await csvMaker.getCsvData(filename);
+  // extract first column
+  const urls: string[] = tmpRecords.map((item: any) => item.urls);
+  const horses: string[] = tmpRecords.map((item: any) => item.horse);
 
-      // error
-      .catch((e: unknown) => {
-        // error
-        outErrorMsg(e, 1);
-        // error message
-        showDialog('no file', 'no csv file selected', e, true);
-        // rejected
-        reject();
-        // close window
-        mainWindow.close();
-      });
-  });
-
-  // file reading
-  promise.then((name: string) => {
+  // loop words
+  for (let i: number = 0; i < urls.length; i++) {
     try {
-      // read file
-      fs.readFile(name, async (err: any, data: any) => {
-        // error
-        if (err) throw err;
+      // empty array
+      let tmpObj: any = {
+        horse: '', // horse name
+        turf: '', // turf ratio
+        turfwin: '', // turf win
+        dirt: '', // dirt ratio
+        dirtwin: '', // dirt win
+        turfdistanse: '', // turf average distance
+        dirtdistanse: '', // dirt average distance
+      };
+      // insert horse name
+      tmpObj.horse = horses[i];
 
-        // initialize
-        await scraper.init();
-        console.log(`scraping ${name}..`);
+      // goto page
+      await scraper.doGo(TARGET_URL + urls[i]);
+      // wait for selector
+      await scraper.doWaitFor(3000);
+      console.log(`goto ${TARGET_URL + urls[i]}`);
 
-        // decoder
-        const str: string = iconv.decode(data, CSV_ENCODING);
-        // format date
-        const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
-
-        // options
-        const recordOptions: parseRecords = {
-          columns: ['horse', 'urls'], // column
-          from_line: 2, // from line 2
-        }
-        // csv reading
-        const tmpRecords: csvRecords[] = parse(str, recordOptions);
-        // extract first column
-        const urls: string[] = tmpRecords.map(item => item.urls);
-        const horses: string[] = tmpRecords.map(item => item.horse);
-
-        // loop words
-        for (let i: number = 0; i < urls.length; i++) {
-          try {
-            // empty array
-            let tmpObj: any = {
-              horse: '', // horse name
-              turf: '', // turf ratio
-              turfwin: '', // turf win
-              dirt: '', // dirt ratio
-              dirtwin: '', // dirt win
-              turfdistanse: '', // turf average distance
-              dirtdistanse: '', // dirt average distance
-            };
-
-            // insert horse name
-            tmpObj.horse = horses[i];
-
-            // goto page
-            await scraper.doGo(TARGET_URL + urls[i]);
-            console.log(`goto ${TARGET_URL + urls[i]}`);
+      // get data
+      for (let j: number = 0; j < selectorArray.length; j++) {
+        try {
+          // check selector
+          if (await scraper.doCheckSelector(selectorArray[j])) {
             // wait for selector
-            await scraper.doWaitFor(3000);
+            await scraper.doWaitFor(200);
+            // acquired data
+            const scrapedData: string = await scraper.doSingleEval(selectorArray[j], 'textContent');
 
-            // get data
-            for (let j: number = 0; j < selectorArray.length; j++) {
-              try {
-                if (await scraper.doCheckSelector(selectorArray[j])) {
-                  // wait for selector
-                  await scraper.doWaitFor(200);
-                  // acquired data
-                  const scrapedData: string = await scraper.doSingleEval(selectorArray[j], 'textContent');
-
-                  // data exists
-                  if (scrapedData != '') {
-                    tmpObj[horseDataArray[j]] = scrapedData;
-                  }
-                  // wait for 100ms
-                  await scraper.doWaitFor(200);
-
-                } else {
-                  console.log('no selector');
-                }
-
-              } catch (e: unknown) {
-                console.log(e);
-              }
+            // data exists
+            if (scrapedData != '') {
+              tmpObj[horseDataArray[j]] = scrapedData;
             }
-            console.log(tmpObj);
-            resultArray.push(tmpObj);
+            // wait for 100ms
+            await scraper.doWaitFor(200);
 
-          } catch (e: unknown) {
-            console.log(e);
+          } else {
+            console.log('no selector');
           }
+
+        } catch (e: unknown) {
+          console.log(e);
         }
-
-        console.log(resultArray);
-
-        const csvHeadObj: csvHeaders = {
-          horse: 'horse', // horse name
-          turf: 'turf',// turf
-          turfwin: 'turfwin',// urf win
-          dirt: 'dirt', // dirt
-          dirtwin: 'dirtwin', // dirt win
-          turfdistanse: 'turfdistanse', // turf distanse
-          dirtdistanse: 'dirtdistanse', // dirt distanse
-        }
-
-        // stringify option
-        const stringifyOptions: any = {
-          header: true, // head mode
-          columns: csvHeadObj,
-        }
-        // export csv
-        const csvString: string = stringifySync(resultArray, stringifyOptions);
-
-        // output csv file
-        fs.writeFileSync(`output/${formattedDate}.csv`, csvString);
-
-        // close window
-        mainWindow.close();
-      });
+      }
+      resultArray.push(tmpObj);
 
     } catch (e: unknown) {
-      // error
-      outErrorMsg(e, 2);
+      console.log(e);
     }
-  });
+  }
 
-  // closing
-  mainWindow.on('closed', () => {
-    // release window
-    mainWindow = null;
-  });
+  // csv header
+  const csvHeadObj: { [key: string]: any } = {
+    horse: 'horse', // horse name
+    turf: 'turf',// turf
+    turfwin: 'turfwin',// urf win
+    dirt: 'dirt', // dirt
+    dirtwin: 'dirtwin', // dirt win
+    turfdistanse: 'turfdistanse', // turf distanse
+    dirtdistanse: 'dirtdistanse', // dirt distanse
+  }
+  // today date
+  const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 8);
+  // make csv
+  await csvMaker.makeCsvData(resultArray, csvHeadObj, `output/${formattedDate}.csv`)
 
+  // close window
+  mainWindow.close();
 });
 
-// choose csv data
-const getCsvData = (): Promise<string[]> => {
-  return new Promise((resolve, reject) => {
-    // options
-    const dialogOptions: csvDialog = {
-      properties: ['openFile'], // file open
-      title: 'choose csv file', // header title
-      defaultPath: '.', // default path
-      filters: [
-        { name: 'csv(Shif-JIS)', extensions: ['csv'] } // filter
-      ],
-    }
-    // show file dialog
-    dialog.showOpenDialog(mainWindow, dialogOptions).then((result: any) => {
-
-      // file exists
-      if (result.filePaths.length > 0) {
-        // resolved
-        resolve(result.filePaths);
-
-        // no file
-      } else {
-        // rejected
-        reject(result.canceled);
-      }
-
-    }).catch((e: unknown) => {
-      // error
-      outErrorMsg(e, 3);
-      // rejected
-      reject();
-    });
-  });
-}
-
-// show dialog
-const showDialog = (title: string, message: string, detail: any, flg: boolean = false): void => {
-  try {
-    // dialog options
-    const options: MessageBoxOptions = {
-      type: 'none',
-      title: title,
-      message: message,
-      detail: detail.toString(),
-    };
-
-    // error or not
-    if (flg) {
-      options.type = 'error';
-
-    } else {
-      options.type = 'info';
-    }
-
-    // show dialog
-    dialog.showMessageBox(options);
-
-  } catch (e: unknown) {
-    // error
-    outErrorMsg(e, 4);
-  };
-}
-
-// outuput error
-const outErrorMsg = (e: unknown, no: number): void => {
-
-  // if type is error
-  if (e instanceof Error) {
-    // error
-    console.log(`${no}: ${e.message}`);
-  }
-}
+// closing
+mainWindow.on('closed', () => {
+  // release window
+  mainWindow = null;
+});
