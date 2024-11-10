@@ -22,8 +22,8 @@ import CSV from './class/Csv1104'; // aggregator
 const csvMaker = new CSV('SJIS');
 
 // active course ID
-const activeId: string = '202405050201';
-const activeCourseName: string = '東京';
+const activeId: string = '202403030410';
+const activeCourseName: string = '福島';
 
 // netkeiba id
 const netKeibaId: string = process.env.NETKEIBA_ID ?? '';
@@ -36,10 +36,10 @@ const scraper = new Scrape();
 // main
 (async (): Promise<void> => {
   try {
+    // last array
+    let wholeArray: any = [];
     // course
     const targetCourse: string = activeId.slice(0, -2);
-    // filename
-    const fileName: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
     // base url
     const baseUrl: string = `${DEF_TRAINING_URL}${targetCourse}`;
 
@@ -64,16 +64,17 @@ const scraper = new Scrape();
     // wait 3 sec
     await scraper.doWaitFor(3000);
     // for race loop
-    const racenums: number[] = [...Array(2)].map((_, i) => i + 1);
+    const racenums: number[] = [...Array(12)].map((_, i) => i + 1);
+    // filename
+    const fileName: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 8);
+    // csv filename
+    const filePath: string = `${OUTPUT_PATH}${fileName}_${activeCourseName}.csv`;
 
     // loop each races
     for await (let j of racenums) {
       try {
         // last array
         let finalArray: any = [];
-
-        // csv filename
-        const filePath: string = `${OUTPUT_PATH}${activeCourseName}-${j}R.csv`;
         // race
         const raceName: string = `${activeCourseName}${j}R`;
         // url
@@ -114,77 +115,16 @@ const scraper = new Scrape();
             finalArray.push(postArray);
             // wait 0.5 sec
             await scraper.doWaitFor(500);
+
           } catch (e) {
             console.log(e);
             break;
           }
         }
-        // header
-        let columns: { [key: string]: string } = {
-          horse: '馬名', // horse name
-          date: '実施日', // date
-          place: '競馬場', // training center
-          condition: '馬場状態', // field condition
-          strength: '強さ', // training strength
-          review: 'レビュー', // review comment
-          time1: 'ラップ1', // rap time
-          time2: 'ラップ2', // rap time
-          time3: 'ラップ3', // rap time
-          time4: 'ラップ4', // rap time
-          time5: 'ラップ5', // rap time
-          color1: '色1', // training color
-          color2: '色2', // training color
-          color3: '色3', // training color
-          color4: '色4', // training color
-          color5: '色5', // training color
-        };
+        // put into wholearray
+        wholeArray.push(finalArray);
         await scraper.doWaitFor(500);
-        // finaljson
-        let finalJsonArray: any[] = [];
-        // set to obj
-        finalArray.forEach((data: any) => {
-          // empty array
-          let tmpObj: { [key: string]: string } = {
-            horse: '', // horse name
-            date: '', // date
-            place: '', // training center
-            condition: '', // field condition
-            strength: '', // training strength
-            review: '', // review comment
-            time1: '', // rap time
-            time2: '', // rap time
-            time3: '', // rap time
-            time4: '', // rap time
-            time5: '', // rap time
-            color1: '', // training color
-            color2: '', // training color
-            color3: '', // training color
-            color4: '', // training color
-            color5: '', // training color
-          };
-          // set each value
-          tmpObj.horse = data[0];
-          tmpObj.date = data[1];
-          tmpObj.place = data[2];
-          tmpObj.condition = data[3];
-          tmpObj.strength = data[4];
-          tmpObj.review = data[5];
-          tmpObj.time1 = data[6][0];
-          tmpObj.time2 = data[6][1];
-          tmpObj.time3 = data[6][2];
-          tmpObj.time4 = data[6][3];
-          tmpObj.time5 = data[6][4];
-          tmpObj.color1 = data[7][0];
-          tmpObj.color2 = data[7][1];
-          tmpObj.color3 = data[7][2];
-          tmpObj.color4 = data[7][3];
-          tmpObj.color5 = data[7][4];
-          // set to json
-          finalJsonArray.push(tmpObj);
-        });
 
-        // write data
-        await csvMaker.makeCsvData(finalJsonArray, columns, filePath);
         // close browser
         console.log(`${raceName} finished`);
 
@@ -193,6 +133,73 @@ const scraper = new Scrape();
         console.log(err2);
       }
     }
+    // header
+    let columns: { [key: string]: string } = {
+      horse: '馬名', // horse name
+      date: '実施日', // date
+      place: '競馬場', // training center
+      condition: '馬場状態', // field condition
+      strength: '強さ', // training strength
+      review: 'レビュー', // review comment
+      time1: 'ラップ1', // rap time
+      time2: 'ラップ2', // rap time
+      time3: 'ラップ3', // rap time
+      time4: 'ラップ4', // rap time
+      time5: 'ラップ5', // rap time
+      color1: '色1', // training color
+      color2: '色2', // training color
+      color3: '色3', // training color
+      color4: '色4', // training color
+      color5: '色5', // training color
+    };
+    // finaljson
+    let finalJsonArray: any[] = [];
+    // all races
+    wholeArray.forEach((races: any) => {
+      races.forEach((data: any) => {
+        // empty array
+        let tmpObj: { [key: string]: string } = {
+          horse: '', // horse name
+          date: '', // date
+          place: '', // training center
+          condition: '', // field condition
+          strength: '', // training strength
+          review: '', // review comment
+          time1: '', // rap time
+          time2: '', // rap time
+          time3: '', // rap time
+          time4: '', // rap time
+          time5: '', // rap time
+          color1: '', // training color
+          color2: '', // training color
+          color3: '', // training color
+          color4: '', // training color
+          color5: '', // training color
+        };
+        // set each value
+        tmpObj.horse = data[0];
+        tmpObj.date = data[1];
+        tmpObj.place = data[2];
+        tmpObj.condition = data[3];
+        tmpObj.strength = data[4];
+        tmpObj.review = data[5];
+        tmpObj.time1 = data[6][0];
+        tmpObj.time2 = data[6][1];
+        tmpObj.time3 = data[6][2];
+        tmpObj.time4 = data[6][3];
+        tmpObj.time5 = data[6][4];
+        tmpObj.color1 = data[7][0];
+        tmpObj.color2 = data[7][1];
+        tmpObj.color3 = data[7][2];
+        tmpObj.color4 = data[7][3];
+        tmpObj.color5 = data[7][4];
+        // set to json
+        finalJsonArray.push(tmpObj);
+      });
+    })
+
+    // write data
+    await csvMaker.makeCsvData(finalJsonArray, columns, filePath);
     // close browser
     await scraper.doClose();
 
@@ -204,3 +211,4 @@ const scraper = new Scrape();
     console.log(e);
   }
 })();
+
