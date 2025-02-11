@@ -2,4 +2,5 @@
 .env
 package-lock.json
 /dist/
-/output/*
+/output/
+/build/

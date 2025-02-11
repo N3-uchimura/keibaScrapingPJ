@@ -71,7 +71,7 @@ app.on('ready', async () => {
     mainWindow = new BrowserWindow(windowOptions);
 
     // make dir
-    await mkdirManager.mkDirAll(['./logs', './output']);
+    await mkdirManager.mkDirAll(['./logs', './output', './build']);
     logger.info('makedir completed.');
     // file reading
     const filename: string = await csvMaker.showCSVDialog(mainWindow);
