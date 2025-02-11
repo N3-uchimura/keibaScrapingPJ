@@ -1,7 +1,7 @@
 {
   "name": "numthree.com.getshubobalinks",
   "productName": "getshubobalinks",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "application for getshubobalinks",
   "main": "getShubobaLinks.ts",
   "scripts": {
@@ -15,7 +15,7 @@
   "dependencies": {
     "fs": "^0.0.1-security",
     "path": "^0.12.7",
-    "puppeteer-core": "^22.15.0"
+    "puppeteer": "^24.1.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.45",

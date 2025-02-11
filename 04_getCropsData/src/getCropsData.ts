@@ -19,10 +19,22 @@ const TURF_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(20)`; // turf 
 const DIRT_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average distance
 //* Modules
 import { app, BrowserWindow } from 'electron'; // electron
-import * as fs from 'fs'; // fs
-import * as path from 'path'; // path
-import { Scrape } from './class/Scrape1102'; // scraper
-import CSV from './class/ElectronCsv1111'; // aggregator
+import { Scrape } from './class/Scrape1103'; // scraper
+import CSV from './class/ElectronCsv0116'; // aggregator
+import ELLogger from './class/MyLogger0301el'; // logger
+import Dialog from './class/ElectronDialog0120'; // dialog
+import mkdir from './class/Mkdir0126'; // mdkir
+
+// scraper
+const scraper = new Scrape();
+// aggregator
+const csvMaker = new CSV('SJIS');
+// loggeer instance
+const logger: ELLogger = new ELLogger('./logs', 'access');
+// dialog
+const dialogMaker: Dialog = new Dialog();
+// mkdir
+const mkdirManager = new mkdir();
 
 //* interfaces
 // window option
@@ -31,12 +43,6 @@ interface windowOption {
   height: number; // window height
   defaultEncoding: string; // default encode
   webPreferences: Object; // node
-}
-
-// tmp records
-interface parseRecords {
-  columns: string[]; // columns
-  from_line: number; // line start
 }
 
 //* General variables
@@ -48,11 +54,6 @@ let resultArray: any[] = [];
 const selectorArray: string[] = [TURF_SELECTOR, TURF_WIN_SELECTOR, DIRT_SELECTOR, DIRT_WIN_SELECTOR, TURF_DIST_SELECTOR, DIRT_DIST_SELECTOR];
 // horse array
 const horseDataArray: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
-
-// scraper
-const scraper = new Scrape();
-// aggregator
-const csvMaker = new CSV('SJIS');
 
 // main
 app.on('ready', async () => {
@@ -68,18 +69,9 @@ app.on('ready', async () => {
   // Electron window
   mainWindow = new BrowserWindow(windowOptions);
 
-  // output dir
-  const outputDirPath: string = path.join(__dirname, 'output');
-  // if not exists
-  if (!fs.existsSync(outputDirPath)) {
-    // make dir
-    fs.promises.mkdir(outputDirPath).then((): void => {
-      console.log('Directory created successfully');
-    }).catch((): void => {
-      console.log('failed to create directory');
-    });
-  }
-
+  logger.info('operation started.');
+  // make dir
+  await mkdirManager.mkDirAll(['./logs', './output']);
   // chosen filename
   const filename: string = await csvMaker.showCSVDialog(mainWindow);
   // read csv file
@@ -108,7 +100,7 @@ app.on('ready', async () => {
       await scraper.doGo(TARGET_URL + urls[i]);
       // wait for selector
       await scraper.doWaitFor(3000);
-      console.log(`goto ${TARGET_URL + urls[i]}`);
+      logger.debug(`goto ${TARGET_URL + urls[i]}`);
 
       // get data
       for (let j: number = 0; j < selectorArray.length; j++) {
@@ -128,17 +120,17 @@ app.on('ready', async () => {
             await scraper.doWaitFor(200);
 
           } else {
-            console.log('no selector');
+            logger.debug('no selector');
           }
 
         } catch (e: unknown) {
-          console.log(e);
+          logger.error(e);
         }
       }
       resultArray.push(tmpObj);
 
     } catch (e: unknown) {
-      console.log(e);
+      logger.error(e);
     }
   }
 
@@ -156,7 +148,9 @@ app.on('ready', async () => {
   const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 8);
   // make csv
   await csvMaker.makeCsvData(resultArray, csvHeadObj, `output/${formattedDate}.csv`)
-
+  // end message
+  dialogMaker.showmessage('info', 'completed.');
+  logger.info('completed.');
   // close window
   mainWindow.close();
 });

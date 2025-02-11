@@ -11,18 +11,25 @@ import * as fs from 'fs'; // fs
 import * as path from 'path'; // path
 import readline from 'readline'; // readline
 import readlineSync from 'readline-sync'; // readsync
-import { Scrape } from './class/Scrape0804'; // scraper
-import CSV from './class/Csv0707'; // aggregator
+import { Scrape } from './class/Scrape1103'; // scraper
+import CSV from './class/Csv1104'; // aggregator
+import Logger from './class/Logger0928'; // logger
+import mkdir from './class/Mkdir0126'; // mdkir
 
 // scraper
 const scraper = new Scrape();
 // aggregator
 const csvMaker = new CSV('SJIS');
+// loggeer instance
+const logger: Logger = new Logger('./logs');
+// mkdir
+const mkdirManager = new mkdir();
 
 // read urls
 const readLines = async (): Promise<string[]> => {
   return new Promise(async (resolve, reject) => {
     try {
+      logger.info('reading lines...');
       // urls
       let urls: string[] = new Array();
       // list files
@@ -45,14 +52,14 @@ const readLines = async (): Promise<string[]> => {
 
       // close readline
       rl.on('close', () => {
-        console.log("END!");
+        logger.info("END!");
         // resolve
         resolve(urls);
       });
 
     } catch (e: unknown) {
       // error
-      console.log(e);
+      logger.error(e);
       // rejected
       reject();
     }
@@ -66,13 +73,13 @@ const showDialog = (array: string[]): Promise<string> => {
     try {
       // dialog options
       const index: number = readlineSync.keyInSelect(array, 'which file?');
-      console.log(`read ${array[index]}.`);
+      logger.info(`read ${array[index]}.`);
       // return target filename
       resolve(array[index]);
 
     } catch (e: unknown) {
       // error
-      console.log(e);
+      logger.error(e);
       // rejected
       reject();
     }
@@ -90,7 +97,7 @@ const listFiles = (): Promise<string[]> => {
 
     } catch (e: unknown) {
       // error
-      console.log(e);
+      logger.error(e);
       // rejected
       reject();
     }
@@ -102,32 +109,14 @@ const listFiles = (): Promise<string[]> => {
   try {
     // str variables
     let strArray: string[][] = [];
+    // make dir
+    await mkdirManager.mkDirAll(['./logs', './csv', './txt']);
     // header
     const sheetTitleArray: string[] = ['horsename', 'birthday', 'country', 'color', 'service', 'win', 'father', 'mother', 'motherfather', 'inbreed', 'cropwin', 'cropwinnative'];
     // target selector
     const selectorArray: string[] = ['title', 'table tr:nth-child(1) td', 'table tr:nth-child(2) td', 'table tr:nth-child(3)  td', 'table tr:nth-child(4) td', 'table tr:nth-child(8) td', 'table tr:nth-child(12) td', 'table tr:nth-child(13) td', 'table tr:nth-child(14) td', 'table tr:nth-child(15) td', 'table tr:nth-child(23) td', 'table tr:nth-child(24) td'];
     // links
     const linkArray: string[] = await readLines();
-    // txt dir
-    const txtDirPath: string = path.join(__dirname, 'txt');
-    // if exists make dir
-    if (!fs.existsSync(txtDirPath)) {
-      fs.promises.mkdir(txtDirPath).then((): void => {
-        console.log('Directory created successfully');
-      }).catch((): void => {
-        console.log('failed to create directory');
-      });
-    }
-    // csv dir
-    const csvDirPath: string = path.join(__dirname, 'csv');
-    // if exists make dir
-    if (!fs.existsSync(csvDirPath)) {
-      fs.promises.mkdir(csvDirPath).then((): void => {
-        console.log('Directory created successfully');
-      }).catch((): void => {
-        console.log('failed to create directory');
-      });
-    }
 
     // initialize
     await scraper.init();
@@ -139,36 +128,34 @@ const listFiles = (): Promise<string[]> => {
     let counter: number = 0;
     // loop urls
     for (const url of linkArray) {
-      console.log(`scraping...${counter}`);
+      logger.info(`scraping...${counter}`);
       // goto shuboba-profile
       await scraper.doGo(url);
-
-      // horse header
-      let myHorseObj: any = {
-        horsename: '',
-        birthday: '',
-        country: '',
-        color: '',
-        service: '',
-        win: '',
-        father: '',
-        mother: '',
-        motherfather: '',
-        inbreed: '',
-        cropwin: '',
-        cropwinnative: '',
-      };
-      // loop in selectors
-      for await (const i of makeNumberRange(0, 11)) {
-        // result
-        const result: string = await scraper.doSingleEval(selectorArray[i], 'textContent');
-        // get into array
-        myHorseObj[sheetTitleArray[i]] = result;
-      }
-      // push to tmp array
-      strArray.push(myHorseObj);
       // increment
       counter++;
+    }
+
+    // horse header
+    let columns: { [key: string]: string } = {
+      horsename: '',
+      birthday: '',
+      country: '',
+      color: '',
+      service: '',
+      win: '',
+      father: '',
+      mother: '',
+      motherfather: '',
+      inbreed: '',
+      cropwin: '',
+      cropwinnative: '',
+    };
+    // loop in selectors
+    for await (const i of makeNumberRange(0, 11)) {
+      // result
+      const result: string = await scraper.doSingleEval(selectorArray[i], 'textContent');
+      // get into array
+      columns[sheetTitleArray[i]] = result;
     }
 
     // filename
@@ -176,14 +163,14 @@ const listFiles = (): Promise<string[]> => {
     // filepath
     const filePath: string = `./csv/${fileName}.csv`;
     // write data
-    await csvMaker.makeCsvData(strArray, filePath);
+    await csvMaker.makeCsvData(strArray, columns, filePath);
 
     // close browser
     await scraper.doClose();
 
   } catch (e: unknown) {
     // error
-    console.log(e);
+    logger.error(e);
   }
 
 })();

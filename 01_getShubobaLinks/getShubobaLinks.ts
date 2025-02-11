@@ -9,11 +9,16 @@ const FOREIGN_URL: string = 'a-z'; // target url
 
 // read modules
 import * as fs from 'fs'; // fs
-import * as path from 'path'; // path
-import { Scrape } from './class/Scrape0804'; // scraper
+import { Scrape } from './class/Scrape1103'; // scraper
+import Logger from './class/Logger0928'; // logger
+import mkdir from './class/Mkdir0126'; // mdkir
 
 // scraper
 const scraper = new Scrape();
+// loggeer instance
+const logger: Logger = new Logger('./logs');
+// mkdir
+const mkdirManager = new mkdir();
 
 // number array
 const makeNumberRange = (start: number, end: number): number[] => [...new Array(end - start).keys()].map(n => n + start);
@@ -21,21 +26,11 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
 // main
 (async (): Promise<void> => {
   try {
+    logger.info('scraping start.');
     // texts
     let urlArray: string[][] = [];
-    // url texts
-    let urlTxtArray: string[][] = [];
-    // txt dir
-    const txtDirPath: string = path.join(__dirname, 'txt');
-
-    // if exists make dir
-    if (!fs.existsSync(txtDirPath)) {
-      fs.promises.mkdir(txtDirPath).then((): void => {
-        console.log('Directory created successfully');
-      }).catch((): void => {
-        console.log('failed to create directory');
-      });
-    }
+    // make dir
+    await mkdirManager.mkDirAll(['./logs', './txt']);
 
     // initialize
     await scraper.init();
@@ -60,10 +55,10 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
         urlArray.push(tmpUrlArray);
 
       } catch (e) {
-        console.log(e);
+        logger.error(e);
       }
     }
-
+    logger.info('scraping has finished.');
     // filename
     const fileName: string = FOREIGN_URL;
     // tmp url
@@ -83,7 +78,8 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
     // combined data
     const urlStr: string = finalUrlArray.join("\n");
     // write file
-    await fs.promises.writeFile(`./txt/${fileName}.txt`, urlStr)
+    await fs.promises.writeFile(`./txt/${fileName}.txt`, urlStr);
+    logger.info('txt file output finished.');
     // close browser
     await scraper.doClose();
 

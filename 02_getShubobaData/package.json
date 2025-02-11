@@ -1,7 +1,7 @@
 {
   "name": "numthree.com.getshubobadata",
   "productName": "getShubobaData",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "application for getshubobadata",
   "main": "getShubobaData.ts",
   "scripts": {
@@ -17,7 +17,9 @@
     "csv-stringify": "^6.5.0",
     "fs": "^0.0.1-security",
     "iconv-lite": "^0.6.3",
+    "log4js": "^6.9.1",
     "path": "^0.12.7",
+    "puppeteer": "^24.2.0",
     "puppeteer-core": "^22.12.1",
     "readline-sync": "^1.4.10"
   },

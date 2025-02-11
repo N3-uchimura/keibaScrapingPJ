@@ -17,26 +17,34 @@ import * as dotenv from 'dotenv'; // dotenc
 dotenv.config(); // dotenv
 import { Scrape } from './class/Scrape1103'; // scraper
 import CSV from './class/Csv1104'; // csv
+import Logger from './class/Logger0928'; // logger
+import mkdir from './class/Mkdir0126'; // mdkir
 
 // csv
 const csvMaker = new CSV('SJIS');
+// loggeer instance
+const logger: Logger = new Logger('./logs');
+// scraper instance
+const scraper = new Scrape();
+// mkdir
+const mkdirManager = new mkdir();
 
 // active course ID
-const activeId: string = '202403030410';
+const activeId: string = '202506010701';
 // racing course
-const activeCourseName: string = '福島';
+const activeCourseName: string = '中山';
 
 // netkeiba id
 const netKeibaId: string = process.env.NETKEIBA_ID ?? '';
 // netkeiba pass
 const netKeibaPass: string = process.env.NETKEIBA_PASS ?? '';
 
-// scraper instance
-const scraper = new Scrape();
-
 // main
 (async (): Promise<void> => {
   try {
+    // make dir
+    await mkdirManager.mkDirAll(['./logs', './output']);
+    logger.info('making dir completed.');
     // last array
     let wholeArray: any = [];
     // course
@@ -48,6 +56,7 @@ const scraper = new Scrape();
     await scraper.init();
     // goto netkeiba
     await scraper.doGo(DEF_NETKEIBA_URL);
+    logger.info(`goto ${DEF_NETKEIBA_URL}`);
     // wait for loading of login button
     await scraper.doWaitFor(2000);
     // click login
@@ -118,7 +127,7 @@ const scraper = new Scrape();
             await scraper.doWaitFor(500);
 
           } catch (e) {
-            console.log(e);
+            logger.error(e);
             break;
           }
         }
@@ -126,12 +135,11 @@ const scraper = new Scrape();
         wholeArray.push(finalArray);
         // wait 0.5 sec
         await scraper.doWaitFor(500);
-
-        console.log(`${raceName} finished`);
+        logger.debug(`${raceName} finished`);
 
       } catch (err2: unknown) {
         // error
-        console.log(err2);
+        logger.error(err2);
       }
     }
     // header
@@ -201,15 +209,16 @@ const scraper = new Scrape();
     });
     // write data
     await csvMaker.makeCsvData(finalJsonArray, columns, filePath);
+    logger.info(`csv completed.`);
     // close browser
     await scraper.doClose();
 
     // finished
-    console.log(`all finished`);
+    logger.info(`all finished`);
 
   } catch (e: unknown) {
     // error
-    console.log(e);
+    logger.error(e);
   }
 })();
 

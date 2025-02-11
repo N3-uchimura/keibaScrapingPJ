@@ -13,13 +13,22 @@ const TARGET_URL: string = 'https://www.netkeiba.com/'; // base url
 
 //* Modules
 import { app, BrowserWindow } from 'electron'; // electron
-import * as fs from 'fs'; // fs
-import * as path from 'path'; // path
-import { Scrape } from './class/Scrape1102'; // custom Scraper
-import CSV from './class/ElectronCsv1111'; // aggregator
+import { Scrape } from './class/Scrape1103'; // custom Scraper
+import ELLogger from './class/MyLogger0301el'; // logger
+import Dialog from './class/ElectronDialog0120'; // dialog
+import mkdir from './class/Mkdir0126'; // mdkir
+import CSV from './class/ElectronCsv0211'; // aggregator
 
+// scraper
+const scraper = new Scrape();
 // aggregator
 const csvMaker = new CSV('SJIS');
+// mkdir
+const mkdirManager = new mkdir();
+// dialog
+const dialogMaker: Dialog = new Dialog();
+// loggeer instance
+const logger: ELLogger = new ELLogger('./logs', 'access');
 
 //* Interfaces
 // window options
@@ -39,9 +48,6 @@ interface Csvheaders {
 //* General variables
 let mainWindow: any = null; // main window
 let resultArray: any[] = []; // result array
-
-// scraper
-const scraper = new Scrape();
 
 // header array
 const headerObjArray: Csvheaders[] = [
@@ -64,16 +70,9 @@ app.on('ready', async () => {
     // Electron window
     mainWindow = new BrowserWindow(windowOptions);
 
-    // output dir
-    const outputDirPath: string = path.join(__dirname, 'output');
-    // if exists make dir
-    if (!fs.existsSync(outputDirPath)) {
-      fs.promises.mkdir(outputDirPath).then((): void => {
-        console.log('Directory created successfully');
-      }).catch((): void => {
-        console.log('failed to create directory');
-      });
-    }
+    // make dir
+    await mkdirManager.mkDirAll(['./logs', './output']);
+    logger.info('makedir completed.');
     // file reading
     const filename: string = await csvMaker.showCSVDialog(mainWindow);
     // get data
@@ -83,6 +82,7 @@ app.on('ready', async () => {
 
     // goto page
     await scraper.doGo(TARGET_URL);
+    logger.info(`scraping ${TARGET_URL}...`);
     // wait for loading
     await scraper.doWaitFor(3000);
 
@@ -103,7 +103,7 @@ app.on('ready', async () => {
         }
 
       } catch (e: unknown) {
-        console.log(e);
+        logger.error(e);
         // goto page
         await scraper.doGo(TARGET_URL);
         // wait for loading
@@ -119,6 +119,9 @@ app.on('ready', async () => {
     const formattedDate: string = (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
     // make csv data
     await csvMaker.makeCsvData(resultArray, stringifyOptions, formattedDate);
+    // end message
+    dialogMaker.showmessage('info', 'completed.');
+    logger.info('completed.');
     // close window
     mainWindow.close();
 
@@ -130,6 +133,6 @@ app.on('ready', async () => {
 
   } catch (e: unknown) {
     // show error dialog
-    console.log('export error', 'error occured when exporting csv.', e, true);
+    logger.error(e);
   }
 });
