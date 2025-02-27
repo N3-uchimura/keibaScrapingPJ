@@ -9,14 +9,14 @@ const FOREIGN_URL: string = 'a-z'; // target url
 
 // read modules
 import * as fs from 'fs'; // fs
-import { Scrape } from './class/Scrape1103'; // scraper
-import Logger from './class/Logger0928'; // logger
-import mkdir from './class/Mkdir0126'; // mdkir
+import { Scrape } from './class/Scrape0120'; // scraper
+import Logger from './class/Logger0227'; // logger
+import mkdir from './class/Mkdir0217'; // mdkir
 
 // scraper
 const scraper = new Scrape();
 // loggeer instance
-const logger: Logger = new Logger('./logs');
+const logger: Logger = new Logger('getShubobaLinks');
 // mkdir
 const mkdirManager = new mkdir();
 

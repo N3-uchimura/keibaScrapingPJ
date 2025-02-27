@@ -3,15 +3,19 @@
  *
  * ElectronDialog
  * function：Dialog operation for electron
- * updated: 2025/01/20
+ * updated: 2025/02/03
  **/
 
 "use strict";
 
 /// import modules
 import { dialog } from "electron"; // electron
+import Logger from "./Logger0203"; // logger
 
-const CHOOSE_IMG_FILE: string = "画像を選択してください"; // select image
+// logger setting
+const logger: Logger = new Logger("./logs", "dialog");
+// select image
+const CHOOSE_IMG_FILE: string = "画像を選択してください";
 
 // ElectronDialog class
 class Dialog {
@@ -22,6 +26,7 @@ class Dialog {
   // show yes/no
   showQuetion(title: string, message: string, detail: string): number {
     try {
+      logger.info("dialog: showQuetion started.");
       // quetion message option
       const options: Electron.MessageBoxSyncOptions = {
         type: "question",
@@ -33,6 +38,7 @@ class Dialog {
       };
       // selected number
       const selected: number = dialog.showMessageBoxSync(options);
+      logger.info("dialog: showQuetion finished.");
       // return selected
       return selected;
     } catch (e: unknown) {
@@ -48,6 +54,7 @@ class Dialog {
   // show image
   showImage(properties: any): any {
     try {
+      logger.info("dialog: showImage started.");
       // quetion message option
       const options: Electron.OpenDialogSyncOptions = {
         properties: properties, // file
@@ -59,6 +66,7 @@ class Dialog {
       };
       // result
       const result: any = dialog.showOpenDialog(options);
+      logger.info("dialog: showImage finished.");
       // return selected
       return result;
     } catch (e: unknown) {
@@ -74,6 +82,7 @@ class Dialog {
   // show message
   showmessage(type: string, message: string) {
     try {
+      logger.info("dialog: showmessage started.");
       // mode
       let tmpType:
         | "none"
@@ -119,6 +128,7 @@ class Dialog {
       };
       // show dialog
       dialog.showMessageBox(options);
+      logger.info("dialog: showmessage finished.");
     } catch (e: unknown) {
       // error
       if (e instanceof Error) {

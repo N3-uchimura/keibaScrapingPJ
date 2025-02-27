@@ -19,10 +19,10 @@ const TURF_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(20)`; // turf 
 const DIRT_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average distance
 //* Modules
 import { app, BrowserWindow } from 'electron'; // electron
-import { Scrape } from './class/Scrape1103'; // scraper
-import CSV from './class/ElectronCsv0116'; // aggregator
-import ELLogger from './class/MyLogger0301el'; // logger
-import Dialog from './class/ElectronDialog0120'; // dialog
+import { Scrape } from './class/Scrape0120'; // scraper
+import CSV from './class/ElectronCsv0211'; // aggregator
+import ELLogger from './class/ELLogger0217'; // logger
+import Dialog from './class/ElectronDialog0203'; // dialog
 import mkdir from './class/Mkdir0126'; // mdkir
 
 // scraper

@@ -3,7 +3,7 @@
  *
  * name：CSV
  * function：CSV operation for electron
- * updated: 2024/11/04
+ * updated: 2025/01/20
  **/
 
 // define modules
@@ -56,12 +56,12 @@ class CSV {
         }
 
       } catch (e: unknown) {
-        // error
-        console.log(e);
         // error type
         if (e instanceof Error) {
-          reject();
+          // error
+          console.log(e.message);
         }
+        reject();
       }
     });
   }
@@ -71,7 +71,6 @@ class CSV {
     return new Promise(async (resolve, reject) => {
       try {
         console.log('func: makeCsvData mode');
-        console.log(arr);
         // csvdata
         const csvData: any = stringify(arr, { header: true, columns: columns });
         // write to csv file
@@ -80,12 +79,12 @@ class CSV {
         resolve();
 
       } catch (e: unknown) {
-        // error
-        console.log(e);
         // error type
         if (e instanceof Error) {
-          reject();
+          // error
+          console.log(e.message);
         }
+        reject();
       }
     });
   }

@@ -1,19 +1,29 @@
 /**
- * Csv.ts
+ * electronCsv.ts
  *
  * name：CSV
  * function：CSV operation for electron
- * updated: 2024/11/04
+ * updated: 2025/2/11
  **/
 
 // define modules
+import { dialog } from 'electron'; // electron
 import { promises } from "fs"; // file system
+import { parse } from 'csv'; // csv parser
+import { stringify } from 'csv'; // csv stringify
 import iconv from 'iconv-lite'; // encoding
-import { parse } from 'csv-parse/sync'; // csv parser
-import { stringify } from 'csv-stringify/sync'; // csv stringify
+import { FileFilter } from 'electron/main'; // file filter
 
 // file system definition
 const { readFile, writeFile } = promises;
+
+// csv dialog option
+interface csvDialog {
+  properties: any; // file open
+  title: string; // header title
+  defaultPath: string; // default path
+  filters: FileFilter[]; // filter
+}
 
 // CSV class
 class CSV {
@@ -27,7 +37,7 @@ class CSV {
   }
 
   // getCsvData
-  getCsvData = async (filenames: string[]): Promise<any> => {
+  getCsvData = async (filenames: string): Promise<any> => {
     return new Promise(async (resolve, reject) => {
       try {
         // filename exists
@@ -37,7 +47,7 @@ class CSV {
           // encoding
           const str: string = iconv.decode(data, CSV.defaultencoding);
           // csv parse
-          const tmpRecords: string[][] = parse(str, {
+          const tmpRecords: any = parse(str, {
             columns: false, // no column
             from_line: 2, // ignore first line
             skip_empty_lines: true, // ignore empty cell
@@ -48,6 +58,7 @@ class CSV {
             record: tmpRecords, // dataa
             filename: filenames[0], // filename
           });
+
 
         } else {
           // nofile, exit
@@ -66,11 +77,10 @@ class CSV {
   }
 
   // makeCsvData
-  makeCsvData = async (arr: any[], columns: { [key: string]: string }, filename: string): Promise<void> => {
+  makeCsvData = async (arr: any[], columns: { [key: string]: any }, filename: string): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       try {
         console.log('func: makeCsvData mode');
-        console.log(arr);
         // csvdata
         const csvData: any = stringify(arr, { header: true, columns: columns });
         // write to csv file
@@ -84,6 +94,51 @@ class CSV {
         // error type
         if (e instanceof Error) {
           reject();
+        }
+      }
+    });
+  }
+
+  // showCSVDialog
+  showCSVDialog = async (mainWindow: any): Promise<string> => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // options
+        const dialogOptions: csvDialog = {
+          properties: ['openFile'], // file open
+          title: 'choose csv file', // header title
+          defaultPath: '.', // default path
+          filters: [
+            { name: 'csv(Shif-JIS)', extensions: ['csv'] } // filter
+          ],
+        }
+        // show file dialog
+        dialog.showOpenDialog(mainWindow, dialogOptions).then((result: any) => {
+
+          // file exists
+          if (result.filePaths.length > 0) {
+            // resolved
+            resolve(result.filePaths);
+
+            // no file
+          } else {
+            // rejected
+            reject(result.canceled);
+          }
+
+        }).catch((e: unknown) => {
+          // error
+          console.log(e);
+          // rejected
+          reject('error');
+        });
+
+      } catch (e: unknown) {
+        // error
+        console.log(e);
+        // error type
+        if (e instanceof Error) {
+          reject('error');
         }
       }
     });

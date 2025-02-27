@@ -15,15 +15,15 @@ const OUTPUT_PATH: string = './output/'; // output path
 // import modules
 import * as dotenv from 'dotenv'; // dotenc
 dotenv.config(); // dotenv
-import { Scrape } from './class/Scrape1103'; // scraper
-import CSV from './class/Csv1104'; // csv
-import Logger from './class/Logger0928'; // logger
-import mkdir from './class/Mkdir0126'; // mdkir
+import { Scrape } from './class/Scrape0120'; // scraper
+import CSV from './class/Csv0120'; // csv
+import Logger from './class/Logger0227'; // logger
+import mkdir from './class/Mkdir0217'; // mdkir
 
 // csv
 const csvMaker = new CSV('SJIS');
 // loggeer instance
-const logger: Logger = new Logger('./logs');
+const logger: Logger = new Logger('getTraining');
 // scraper instance
 const scraper = new Scrape();
 // mkdir

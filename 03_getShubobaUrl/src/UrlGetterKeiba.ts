@@ -13,9 +13,9 @@ const TARGET_URL: string = 'https://www.netkeiba.com/'; // base url
 
 //* Modules
 import { app, BrowserWindow } from 'electron'; // electron
-import { Scrape } from './class/Scrape1103'; // custom Scraper
-import ELLogger from './class/MyLogger0301el'; // logger
-import Dialog from './class/ElectronDialog0120'; // dialog
+import { Scrape } from './class/Scrape0120'; // custom Scraper
+import ELLogger from './class/ELLogger0217'; // logger
+import Dialog from './class/ElectronDialog0203'; // dialog
 import mkdir from './class/Mkdir0126'; // mdkir
 import CSV from './class/ElectronCsv0211'; // aggregator
 

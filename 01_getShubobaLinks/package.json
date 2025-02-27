@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "fs": "^0.0.1-security",
+    "log4js": "^6.9.1",
     "path": "^0.12.7",
     "puppeteer": "^24.1.0"
   },

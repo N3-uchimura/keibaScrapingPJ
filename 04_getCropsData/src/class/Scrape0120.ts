@@ -3,7 +3,7 @@
  *
  * class：Scrape
  * function：scraping site
- * updated: 2024/11/03
+ * updated: 2025/01/20
  **/
 
 const DISABLE_EXTENSIONS: string = "--disable-extensions"; // disable extension
@@ -24,6 +24,13 @@ import { setTimeout } from 'node:timers/promises'; // wait for seconds
 import puppeteer from "puppeteer"; // Puppeteer for scraping
 
 //* Interfaces
+// puppeteer options
+interface puppOption {
+  headless: boolean; // display mode
+  ignoreDefaultArgs: string[]; // ignore extensions
+  args: string[]; // args
+}
+
 // class
 export class Scrape {
   static browser: any; // static browser
@@ -44,10 +51,9 @@ export class Scrape {
   init(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        const puppOptions: any = {
-          headless: true, // no display mode
-          ignoreDefaultArgs: [], // ignore extensions
-          /*
+        const puppOptions: puppOption = {
+          headless: false, // no display mode
+          ignoreDefaultArgs: [DISABLE_EXTENSIONS], // ignore extensions
           args: [
             NO_SANDBOX,
             DISABLE_SANDBOX,
@@ -59,7 +65,6 @@ export class Scrape {
             IGNORE_CERT_ERROR,
             MAX_SCREENSIZE,
           ], // args
-          */
         };
         // lauch browser
         Scrape.browser = await puppeteer.launch(puppOptions);
@@ -67,7 +72,7 @@ export class Scrape {
         Scrape.page = await Scrape.browser.newPage();
         // set viewport
         Scrape.page.setViewport({
-          width: 1000,
+          width: 1920,
           height: 1000,
         });
         // mimic agent
@@ -80,9 +85,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`init: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -99,9 +104,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`getTitle: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        // reject
+        reject('error');
       }
     });
   }
@@ -118,9 +123,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`getTitle: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        // reject
+        reject('error');
       }
     });
   }
@@ -137,9 +142,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`getHref: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        // reject
+        reject('error');
       }
     });
   }
@@ -158,9 +163,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`pressEnter: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -171,6 +176,12 @@ export class Scrape {
       try {
         // goto target page
         await Scrape.page.goto(targetPage);
+        // get page height
+        const height = await Scrape.page.evaluate(() => {
+          return document.body.scrollHeight;
+        });
+        // body height
+        this._height = height;
         // resolved
         resolve();
 
@@ -179,9 +190,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doGo: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -200,9 +211,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doGoBack: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        // reject
+        reject();
       }
     });
   }
@@ -221,9 +232,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doClick: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -242,9 +253,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doType: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -263,9 +274,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doClear: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -284,9 +295,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doSelect: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -305,9 +316,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doScreenshot: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -316,7 +327,6 @@ export class Scrape {
   mouseWheel(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log(this._height);
         // mouse wheel to bottom
         await Scrape.page.mouse.wheel({ deltaY: this._height - 200 });
         // resolved
@@ -327,34 +337,49 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`mouseWheel: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
 
   // eval
   doSingleEval(selector: string, property: string): Promise<string> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _) => {
       try {
-        // target value
-        const item: any = await Scrape.page.$(selector);
+        // target item
+        const exists: boolean = await Scrape.page.$eval(selector, () => true).catch(() => false);
 
-        // if not null
-        if (item !== null) {
-          // got data
-          const data: string = await (
-            await item.getProperty(property)
-          ).jsonValue();
+        // no result
+        if (!exists) {
+          console.log("not exists");
+          resolve('');
 
-          // if got data not null
-          if (data) {
-            // resolved
-            resolve(data);
+        } else {
+          // target value
+          const item: any = await Scrape.page.$(selector);
+
+          // if not null
+          if (item !== null) {
+            // got data
+            const data: string = await (
+              await item.getProperty(property)
+            ).jsonValue();
+
+            // if got data not null
+            if (data) {
+              // resolved
+              resolve(data);
+
+            } else {
+              console.log("nodata error");
+              resolve('');
+            }
 
           } else {
-            reject("error");
+            console.log("target null");
+            resolve('');
           }
         }
 
@@ -363,9 +388,8 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doSingleEval: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        resolve('error');
       }
     });
   }
@@ -385,18 +409,8 @@ export class Scrape {
         if (result) {
           // loop in list
           for (const ls of list) {
-            try {
-              // push to data set
-              datas.push(await (await ls.getProperty(property)).jsonValue());
-            } catch (e: unknown) {
-              // if type is error
-              if (e instanceof Error) {
-                // error
-                console.log(`doMultiEval: ${e.message}`);
-                // reject
-                reject(e.message);
-              }
-            }
+            // push to data set
+            datas.push(await (await ls.getProperty(property)).jsonValue());
           }
           // resolved
           resolve(datas);
@@ -407,9 +421,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doMultiEval: ${e.message}`);
-          // reject
-          reject(e.message);
         }
+        // reject
+        reject('error');
       }
     });
   }
@@ -427,9 +441,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doWaitFor: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -454,9 +468,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doWaitSelector: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -474,9 +488,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doWaitForNav: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -495,9 +509,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doCheckSelector: ${e.message}`);
-          // reject
-          reject(false);
         }
+        // reject
+        reject(false);
       }
     });
   }
@@ -508,6 +522,8 @@ export class Scrape {
       try {
         // close browser
         await Scrape.browser.close();
+        // close page
+        await Scrape.page.close();
         // resolved
         resolve();
 
@@ -516,9 +532,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doClose: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }
@@ -537,9 +553,9 @@ export class Scrape {
         if (e instanceof Error) {
           // error
           console.log(`doReload: ${e.message}`);
-          // reject
-          reject();
         }
+        // reject
+        reject();
       }
     });
   }

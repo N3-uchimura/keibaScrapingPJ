@@ -8,20 +8,19 @@
 
 // read modules
 import * as fs from 'fs'; // fs
-import * as path from 'path'; // path
 import readline from 'readline'; // readline
 import readlineSync from 'readline-sync'; // readsync
-import { Scrape } from './class/Scrape1103'; // scraper
-import CSV from './class/Csv1104'; // aggregator
-import Logger from './class/Logger0928'; // logger
-import mkdir from './class/Mkdir0126'; // mdkir
+import { Scrape } from './class/Scrape0120'; // scraper
+import CSV from './class/Csv0120'; // aggregator
+import Logger from './class/Logger0227'; // logger
+import mkdir from './class/Mkdir0217'; // mdkir
 
 // scraper
 const scraper = new Scrape();
 // aggregator
 const csvMaker = new CSV('SJIS');
 // loggeer instance
-const logger: Logger = new Logger('./logs');
+const logger: Logger = new Logger('getShubobaData');
 // mkdir
 const mkdirManager = new mkdir();
 

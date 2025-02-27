@@ -3,7 +3,7 @@
  *
  * name：Logger
  * function：Logging operation
- * updated: 2024/09/28
+ * updated: 2025/02/27
  **/
 
 'use strict';
@@ -21,11 +21,13 @@ class Logger {
   static loggerDir: string;
 
   // construnctor
-  constructor(dirpath: string) {
+  constructor(dirname: string) {
+    // home dir
+    const homeDir: string = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"]!;
     // logger dir path
-    Logger.loggerDir = dirpath;
+    Logger.loggerDir = path.join(homeDir, "nthree", dirname);
     // Logger config
-    const prefix: string = `${(new Date().toJSON().slice(0, 10))}.log`
+    const prefix: string = `${dirname}-${(new Date().toJSON().slice(0, 10))}.log`
     // logger config
     log4js.configure({
       appenders: {
@@ -50,15 +52,6 @@ class Logger {
     Logger.logger.info(message);
   }
 
-  // log error
-  error = (e: unknown) => {
-    // error
-    if (e instanceof Error) {
-      // error
-      Logger.logger.error(e.message);
-    }
-  }
-
   // log debug info
   debug = (message: string) => {
     Logger.logger.debug(message);
@@ -67,6 +60,15 @@ class Logger {
   // log trace info
   trace = (message: string) => {
     Logger.logger.trace(message);
+  }
+
+  // log error
+  error = (e: unknown) => {
+    // error
+    if (e instanceof Error) {
+      // error
+      Logger.logger.error(e.message);
+    }
   }
 
   // shutdown logger

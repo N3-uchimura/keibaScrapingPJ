@@ -3,11 +3,10 @@
  *
  * name：Mkdir
  * function：Mkdir operation for electron
- * updated: 2025/01/26
+ * updated: 2025/02/17
  **/
 
 // define modules
-import * as path from 'path'; // path
 import { promises, existsSync } from "fs"; // file system
 // file system definition
 const { mkdir } = promises;
@@ -16,22 +15,20 @@ const { mkdir } = promises;
 class Mkdir {
   // construnctor
   constructor() {
-    console.log('mkdir: initialize mode');
+    console.log("mkdir: initialize mode");
   }
 
   // mkDir
   mkDir = async (dir: string): Promise<void> => {
     return new Promise(async (resolve, _) => {
       try {
-        // file path
-        const filePath: string = path.join(__dirname, '..', dir);
         // not exists
-        if (!existsSync(filePath)) {
+        if (!existsSync(dir)) {
           // make dir
-          await mkdir(filePath);
+          await mkdir(dir);
           resolve();
         } else {
-          throw Error('already exists.');
+          throw Error("already exists.");
         }
       } catch (err: unknown) {
         // error
@@ -42,36 +39,36 @@ class Mkdir {
         resolve();
       }
     });
-  }
+  };
 
   // mkDirAll
   mkDirAll = async (dirs: string[]): Promise<void> => {
     return new Promise(async (resolve1, _) => {
       try {
         // make all dir
-        Promise.all(dirs.map(async (dir: string): Promise<void> => {
-          return new Promise(async (resolve2, _) => {
-            try {
-              // file path
-              const filePath: string = path.join(__dirname, '..', dir);
-              // not exists
-              if (!existsSync(filePath)) {
-                // make dir
-                await mkdir(filePath);
-                resolve2();
-              } else {
-                throw Error('already exists.');
-              }
-            } catch (err: unknown) {
-              // error
-              if (err instanceof Error) {
+        Promise.all(
+          dirs.map(async (dir: string): Promise<void> => {
+            return new Promise(async (resolve2, _) => {
+              try {
+                // not exists
+                if (!existsSync(dir)) {
+                  // make dir
+                  await mkdir(dir);
+                  resolve2();
+                } else {
+                  throw Error("already exists.");
+                }
+              } catch (err: unknown) {
                 // error
-                console.log(err.message);
+                if (err instanceof Error) {
+                  // error
+                  console.log(err.message);
+                }
+                resolve2();
               }
-              resolve2();
-            }
+            });
           })
-        })).then(() => resolve1());
+        ).then(() => resolve1());
 
         // make dir
       } catch (e: unknown) {
@@ -83,7 +80,7 @@ class Mkdir {
         resolve1();
       }
     });
-  }
+  };
 }
 
 // export module
