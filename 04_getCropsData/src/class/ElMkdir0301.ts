@@ -1,41 +1,45 @@
 /**
- * Mkdir.ts
+ * ELMkdir.ts
  *
- * name：Mkdir
+ * name：ELMkdir
  * function：Mkdir operation for electron
- * updated: 2025/02/17
+ * updated: 2025/03/01
  **/
 
 // define modules
 import { promises, existsSync } from "fs"; // file system
+import ELLogger from "./ELLogger"; // logger
 // file system definition
 const { mkdir } = promises;
 
 // Mkdir class
 class Mkdir {
+  static logger: any; // static logger
+
   // construnctor
-  constructor() {
-    console.log("mkdir: initialize mode");
+  constructor(appname: string) {
+    // logger setting
+    Mkdir.logger = new ELLogger(appname, "mkdir");
+    Mkdir.logger.info("mkdir: mkdir initialized.");
   }
 
   // mkDir
   mkDir = async (dir: string): Promise<void> => {
     return new Promise(async (resolve, _) => {
       try {
+        Mkdir.logger.info("mkdir: mkdir started.");
         // not exists
         if (!existsSync(dir)) {
           // make dir
           await mkdir(dir);
           resolve();
+          Mkdir.logger.info("mkdir: mkdir completed.");
         } else {
           throw Error("already exists.");
         }
       } catch (err: unknown) {
         // error
-        if (err instanceof Error) {
-          // error
-          console.log(err.message);
-        }
+        Mkdir.logger.error(err);
         resolve();
       }
     });
@@ -45,6 +49,7 @@ class Mkdir {
   mkDirAll = async (dirs: string[]): Promise<void> => {
     return new Promise(async (resolve1, _) => {
       try {
+        Mkdir.logger.info("mkdir: all mkdir started.");
         // make all dir
         Promise.all(
           dirs.map(async (dir: string): Promise<void> => {
@@ -56,27 +61,22 @@ class Mkdir {
                   await mkdir(dir);
                   resolve2();
                 } else {
+                  // error
                   throw Error("already exists.");
                 }
               } catch (err: unknown) {
                 // error
-                if (err instanceof Error) {
-                  // error
-                  console.log(err.message);
-                }
                 resolve2();
               }
             });
           })
         ).then(() => resolve1());
+        Mkdir.logger.info("mkdir: mkDirAll started.");
 
         // make dir
       } catch (e: unknown) {
         // error
-        if (e instanceof Error) {
-          // error
-          console.log(e.message);
-        }
+        Mkdir.logger.error(e);
         resolve1();
       }
     });

@@ -3,39 +3,44 @@
  *
  * name：Mkdir
  * function：Mkdir operation for electron
- * updated: 2025/02/17
+ * updated: 2025/03/01
  **/
+
+"use strict";
 
 // define modules
 import { promises, existsSync } from "fs"; // file system
+import Logger from './Logger'; // logger
 // file system definition
 const { mkdir } = promises;
 
 // Mkdir class
 class Mkdir {
+  static logger: any; // static logger
+
   // construnctor
   constructor() {
-    console.log("mkdir: initialize mode");
+    // loggeer instance
+    Mkdir.logger = new Logger('mkdir', true);
+    Mkdir.logger.debug('mkdir: constructed');
   }
 
   // mkDir
   mkDir = async (dir: string): Promise<void> => {
     return new Promise(async (resolve, _) => {
       try {
+        Mkdir.logger.debug('mkDir: mkDir started.');
         // not exists
         if (!existsSync(dir)) {
           // make dir
           await mkdir(dir);
+          Mkdir.logger.debug('mkDir: mkDir finished.');
           resolve();
         } else {
-          throw Error("already exists.");
+          throw Error("mkDir: already exists.");
         }
-      } catch (err: unknown) {
-        // error
-        if (err instanceof Error) {
-          // error
-          console.log(err.message);
-        }
+      } catch (e: unknown) {
+        Mkdir.logger.error(e);
         resolve();
       }
     });
@@ -45,6 +50,7 @@ class Mkdir {
   mkDirAll = async (dirs: string[]): Promise<void> => {
     return new Promise(async (resolve1, _) => {
       try {
+        Mkdir.logger.debug('mkDir: mkDirAll started.');
         // make all dir
         Promise.all(
           dirs.map(async (dir: string): Promise<void> => {
@@ -54,16 +60,13 @@ class Mkdir {
                 if (!existsSync(dir)) {
                   // make dir
                   await mkdir(dir);
+                  Mkdir.logger.debug('mkDir: mkDirAll finished.');
                   resolve2();
                 } else {
-                  throw Error("already exists.");
+                  throw Error("mkDir: already exists.");
                 }
               } catch (err: unknown) {
-                // error
-                if (err instanceof Error) {
-                  // error
-                  console.log(err.message);
-                }
+                Mkdir.logger.error(err);
                 resolve2();
               }
             });
@@ -72,11 +75,7 @@ class Mkdir {
 
         // make dir
       } catch (e: unknown) {
-        // error
-        if (e instanceof Error) {
-          // error
-          console.log(e.message);
-        }
+        Mkdir.logger.error(e);
         resolve1();
       }
     });

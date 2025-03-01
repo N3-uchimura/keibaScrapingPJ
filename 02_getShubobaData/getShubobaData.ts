@@ -10,17 +10,17 @@
 import * as fs from 'fs'; // fs
 import readline from 'readline'; // readline
 import readlineSync from 'readline-sync'; // readsync
-import { Scrape } from './class/Scrape0120'; // scraper
-import CSV from './class/Csv0120'; // aggregator
-import Logger from './class/Logger0227'; // logger
-import mkdir from './class/Mkdir0217'; // mdkir
+import { Scrape } from './class/Scrape0301'; // scraper
+import CSV from './class/Csv0301'; // aggregator
+import Logger from './class/Logger'; // logger
+import mkdir from './class/Mkdir0301'; // mdkir
 
 // scraper
 const scraper = new Scrape();
 // aggregator
 const csvMaker = new CSV('SJIS');
 // loggeer instance
-const logger: Logger = new Logger('getShubobaData');
+const logger: Logger = new Logger('getShubobaData', true);
 // mkdir
 const mkdirManager = new mkdir();
 

@@ -3,25 +3,28 @@
  *
  * class：Scrape
  * function：scraping site
- * updated: 2025/01/20
+ * updated: 2025/03/01
  **/
 
-const DISABLE_EXTENSIONS: string = "--disable-extensions"; // disable extension
-const ALLOW_INSECURE: string = "--allow-running-insecure-content"; // allow insecure content
-const IGNORE_CERT_ERROR: string = "--ignore-certificate-errors"; // ignore cert-errors
-const NO_SANDBOX: string = "--no-sandbox"; // no sandbox
-const DISABLE_SANDBOX: string = "--disable-setuid-sandbox"; // no setup sandbox
-const DISABLE_DEV_SHM: string = "--disable-dev-shm-usage"; // no dev shm
-const DISABLE_GPU: string = "--disable-gpu"; // no gpu
-const NO_FIRST_RUN: string = "--no-first-run"; // no first run
-const NO_ZYGOTE: string = "--no-zygote"; // no zygote
-const MAX_SCREENSIZE: string = "--start-maximized"; // max screen
+'use strict';
+
+const DISABLE_EXTENSIONS: string = '--disable-extensions'; // disable extension
+const ALLOW_INSECURE: string = '--allow-running-insecure-content'; // allow insecure content
+const IGNORE_CERT_ERROR: string = '--ignore-certificate-errors'; // ignore cert-errors
+const NO_SANDBOX: string = '--no-sandbox'; // no sandbox
+const DISABLE_SANDBOX: string = '--disable-setuid-sandbox'; // no setup sandbox
+const DISABLE_DEV_SHM: string = '--disable-dev-shm-usage'; // no dev shm
+const DISABLE_GPU: string = '--disable-gpu'; // no gpu
+const NO_FIRST_RUN: string = '--no-first-run'; // no first run
+const NO_ZYGOTE: string = '--no-zygote'; // no zygote
+const MAX_SCREENSIZE: string = '--start-maximized'; // max screen
 const DEF_USER_AGENT: string =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36"; // useragent
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'; // useragent
 
 // define modules
 import { setTimeout } from 'node:timers/promises'; // wait for seconds
-import puppeteer from "puppeteer"; // Puppeteer for scraping
+import puppeteer from 'puppeteer'; // Puppeteer for scraping
+import Logger from './Logger'; // logger
 
 //* Interfaces
 // puppeteer options
@@ -33,6 +36,7 @@ interface puppOption {
 
 // class
 export class Scrape {
+  static logger: any; // logger
   static browser: any; // static browser
   static page: any; // static page
 
@@ -41,16 +45,20 @@ export class Scrape {
 
   // constractor
   constructor() {
+    // loggeer instance
+    Scrape.logger = new Logger('scrape', true);
     // result
     this._result = false;
     // height
     this._height = 0;
+    Scrape.logger.debug('scrape: constructed');
   }
 
   // initialize
   init(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: initialize mode.');
         const puppOptions: puppOption = {
           headless: false, // no display mode
           ignoreDefaultArgs: [DISABLE_EXTENSIONS], // ignore extensions
@@ -77,15 +85,12 @@ export class Scrape {
         });
         // mimic agent
         await Scrape.page.setUserAgent(DEF_USER_AGENT);
+        Scrape.logger.debug('scrape: initialize finished.');
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`init: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -96,15 +101,12 @@ export class Scrape {
   getUrl(): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getUrl mode.');
         // resolved
         resolve(await Scrape.page.url());
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`getTitle: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject('error');
       }
@@ -115,15 +117,12 @@ export class Scrape {
   getTitle(): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // resolved
         resolve(await Scrape.page.title);
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`getTitle: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject('error');
       }
@@ -134,15 +133,12 @@ export class Scrape {
   getHref(elem: string): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // resolved
         resolve(await Scrape.page.$eval(elem, (elm: any) => elm.href));
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`getHref: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject('error');
       }
@@ -153,17 +149,14 @@ export class Scrape {
   pressEnter(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // press enter key
-        await Scrape.page.keyboard.press("Enter");
+        await Scrape.page.keyboard.press('Enter');
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`pressEnter: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -174,6 +167,7 @@ export class Scrape {
   doGo(targetPage: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // goto target page
         await Scrape.page.goto(targetPage);
         // get page height
@@ -186,11 +180,7 @@ export class Scrape {
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doGo: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -201,17 +191,14 @@ export class Scrape {
   doGoBack(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // go back
         await Scrape.page.goBack();
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doGoBack: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -222,17 +209,14 @@ export class Scrape {
   doClick(elem: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // click target element
         await Scrape.page.$$eval(elem, (elements: any) => elements[0].click());
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doClick: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -243,17 +227,14 @@ export class Scrape {
   doType(elem: string, value: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // type element on specified value
         await Scrape.page.type(elem, value, { delay: 100 });
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doType: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -264,17 +245,14 @@ export class Scrape {
   doClear(elem: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // clear the textbox
-        await Scrape.page.$eval(elem, (element: any) => (element.value = ""));
+        await Scrape.page.$eval(elem, (element: any) => (element.value = ''));
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doClear: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -285,17 +263,14 @@ export class Scrape {
   doSelect(elem: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // select dropdown element
         await Scrape.page.select(elem);
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doSelect: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -306,17 +281,14 @@ export class Scrape {
   doScreenshot(path: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // take screenshot of window
         await Scrape.page.screenshot({ path: path });
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doScreenshot: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -327,17 +299,14 @@ export class Scrape {
   mouseWheel(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // mouse wheel to bottom
         await Scrape.page.mouse.wheel({ deltaY: this._height - 200 });
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`mouseWheel: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -348,12 +317,13 @@ export class Scrape {
   doSingleEval(selector: string, property: string): Promise<string> {
     return new Promise(async (resolve, _) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // target item
         const exists: boolean = await Scrape.page.$eval(selector, () => true).catch(() => false);
 
         // no result
         if (!exists) {
-          console.log("not exists");
+          console.log('not exists');
           resolve('');
 
         } else {
@@ -373,22 +343,18 @@ export class Scrape {
               resolve(data);
 
             } else {
-              console.log("nodata error");
+              console.log('nodata error');
               resolve('');
             }
 
           } else {
-            console.log("target null");
+            console.log('target null');
             resolve('');
           }
         }
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doSingleEval: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         resolve('error');
       }
     });
@@ -398,6 +364,7 @@ export class Scrape {
   doMultiEval(selector: string, property: string): Promise<string[]> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // data set
         let datas: string[] = [];
         // target list
@@ -417,11 +384,7 @@ export class Scrape {
         }
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doMultiEval: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject('error');
       }
@@ -432,16 +395,13 @@ export class Scrape {
   doWaitFor(time: number): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // wait for time
         await setTimeout(time);
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doWaitFor: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -452,6 +412,7 @@ export class Scrape {
   doWaitSelector(elem: string, time: number): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // target item
         const exists: boolean = await Scrape.page.$eval(elem, () => true).catch(() => false);
 
@@ -464,11 +425,7 @@ export class Scrape {
         }
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doWaitSelector: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -479,16 +436,13 @@ export class Scrape {
   doWaitForNav(time: number): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // wait for time
         await Scrape.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: time });
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doWaitForNav: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -499,17 +453,14 @@ export class Scrape {
   doCheckSelector(elem: string): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // target item
         const exists: boolean = await Scrape.page.$eval(elem, () => true).catch(() => false);
         // return true/false
         resolve(exists);
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doCheckSelector: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject(false);
       }
@@ -520,6 +471,7 @@ export class Scrape {
   doClose(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // close browser
         await Scrape.browser.close();
         // close page
@@ -528,11 +480,7 @@ export class Scrape {
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doClose: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }
@@ -543,17 +491,14 @@ export class Scrape {
   doReload(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
+        Scrape.logger.debug('scrape: getTitle mode.');
         // close browser
         await Scrape.page.reload();
         // resolved
         resolve();
 
       } catch (e: unknown) {
-        // if type is error
-        if (e instanceof Error) {
-          // error
-          console.log(`doReload: ${e.message}`);
-        }
+        Scrape.logger.error(e);
         // reject
         reject();
       }

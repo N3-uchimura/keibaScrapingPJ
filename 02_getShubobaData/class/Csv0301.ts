@@ -3,25 +3,31 @@
  *
  * name：CSV
  * function：CSV operation for electron
- * updated: 2025/01/20
+ * updated: 2025/03/01
  **/
 
+'use strict';
+
 // define modules
-import { promises } from "fs"; // file system
+import { promises } from 'fs'; // file system
 import iconv from 'iconv-lite'; // encoding
 import { parse } from 'csv-parse/sync'; // csv parser
 import { stringify } from 'csv-stringify/sync'; // csv stringify
+import Logger from './Logger'; // logger
 
 // file system definition
 const { readFile, writeFile } = promises;
 
 // CSV class
 class CSV {
+  static logger: any; // static logger
   static defaultencoding: string; // defaultencoding
 
   // construnctor
   constructor(encoding: string) {
-    console.log('csv: initialize mode');
+    // loggeer instance
+    CSV.logger = new Logger('csv', true);
+    CSV.logger.debug('csv: constructed');
     // DB config
     CSV.defaultencoding = encoding;
   }
@@ -30,6 +36,7 @@ class CSV {
   getCsvData = async (filenames: string[]): Promise<any> => {
     return new Promise(async (resolve, reject) => {
       try {
+        CSV.logger.debug('csv: getCsvData started.');
         // filename exists
         if (filenames.length) {
           // read file
@@ -42,25 +49,19 @@ class CSV {
             from_line: 2, // ignore first line
             skip_empty_lines: true, // ignore empty cell
           });
-          console.log(`you got csv named ${data}`);
+          CSV.logger.debug(`you got csv named ${data}`);
           // resolve
           resolve({
             record: tmpRecords, // dataa
             filename: filenames[0], // filename
           });
 
-
         } else {
-          // nofile, exit
-          reject();
+          throw Error('csv: no file exists.');
         }
 
       } catch (e: unknown) {
-        // error type
-        if (e instanceof Error) {
-          // error
-          console.log(e.message);
-        }
+        CSV.logger.error(e);
         reject();
       }
     });
@@ -70,20 +71,17 @@ class CSV {
   makeCsvData = async (arr: any[], columns: { [key: string]: string }, filename: string): Promise<void> => {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log('func: makeCsvData mode');
+        CSV.logger.debug('csv: makeCsvData started.');
         // csvdata
         const csvData: any = stringify(arr, { header: true, columns: columns });
         // write to csv file
         await writeFile(filename, iconv.encode(csvData, 'shift_jis'));
+        CSV.logger.debug('csv: makeCsvData finished.');
         // complete
         resolve();
 
       } catch (e: unknown) {
-        // error type
-        if (e instanceof Error) {
-          // error
-          console.log(e.message);
-        }
+        CSV.logger.error(e);
         reject();
       }
     });

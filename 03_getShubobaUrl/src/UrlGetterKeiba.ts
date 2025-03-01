@@ -6,29 +6,31 @@
 "use strict";
 
 //* Constants
+const APP_NAME: string = 'UrlGetterKeiba'; // app name
 const WINDOW_WIDTH: number = 1000; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
 const DEFAULT_ENCODING: string = 'utf8'; // encoding
+const CSV_ENCODING: string = 'SJIS'; // csv encoding
 const TARGET_URL: string = 'https://www.netkeiba.com/'; // base url
 
 //* Modules
 import { app, BrowserWindow } from 'electron'; // electron
-import { Scrape } from './class/Scrape0120'; // custom Scraper
-import ELLogger from './class/ELLogger0217'; // logger
-import Dialog from './class/ElectronDialog0203'; // dialog
-import mkdir from './class/Mkdir0126'; // mdkir
-import CSV from './class/ElectronCsv0211'; // aggregator
+import { Scrape } from './class/ElScrape0301'; // custom Scraper
+import ELLogger from './class/ElLogger'; // logger
+import Dialog from './class/ElDialog0301'; // dialog
+import mkdir from './class/ElMkdir0301'; // mdkir
+import CSV from './class/ElCsv0301'; // aggregator
 
 // scraper
-const scraper = new Scrape();
+const scraper = new Scrape(APP_NAME);
 // aggregator
-const csvMaker = new CSV('SJIS');
+const csvMaker = new CSV(CSV_ENCODING, APP_NAME);
 // mkdir
-const mkdirManager = new mkdir();
+const mkdirManager = new mkdir(APP_NAME);
 // dialog
-const dialogMaker: Dialog = new Dialog();
+const dialogMaker: Dialog = new Dialog(APP_NAME);
 // loggeer instance
-const logger: ELLogger = new ELLogger('./logs', 'access');
+const logger: ELLogger = new ELLogger(APP_NAME, "main");
 
 //* Interfaces
 // window options
