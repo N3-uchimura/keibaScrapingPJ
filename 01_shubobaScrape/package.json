@@ -1,0 +1,32 @@
+{
+  "name": "numthree.net.getshuboba",
+  "productName": "getshuboba",
+  "version": "1.0.0",
+  "description": "application for getshuboba",
+  "scripts": {
+    "link": "ts-node getShubobaLinks.ts",
+    "data": "ts-node getShubobaData.ts"
+  },
+  "keywords": [],
+  "author": {
+    "name": "numthree-uchimura (https://github.com/N3-uchimura/)",
+    "email": "uchimura@numthree.net"
+  },
+  "dependencies": {
+    "@types/readline-sync": "^1.4.8",
+    "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2",
+    "dotenv": "^16.5.0",
+    "iconv-lite": "^0.6.3",
+    "log4js": "^6.9.1",
+    "puppeteer": "^24.1.0",
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.45",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^3.15.0",
+    "typescript": "^4.9.5"
+  },
+  "license": "ISC"
+}

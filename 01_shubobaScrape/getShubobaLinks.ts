@@ -6,21 +6,28 @@
 
 'use strict';
 
-const BASE_URL: string = 'http://keiba.no.coocan.jp/data/_index_';
+//* Constants
 const FOREIGN_URL: string = 'a-z'; // target url
+// name space
+import { myConst } from './consts/globalvariables';
 
 // read modules
-import * as fs from 'fs'; // fs
-import { Scrape } from './class/Scrape0301'; // scraper
+import * as path from 'path'; // path
+import { writeFile } from 'node:fs/promises'; // file system
+import { config as dotenv } from 'dotenv'; // dotenv
+import { Scrape } from './class/Scrape0517'; // scraper
 import Logger from './class/Logger'; // logger
-import mkdir from './class/Mkdir0301'; // mdkir
+import mkdir from './class/Mkdir0517'; // mdkir
+dotenv({ path: path.join(__dirname, '.env') }); // env
 
-// scraper
-const scraper = new Scrape();
+// re define
+const BASE_URL: string = process.env.BASE_URL ?? '';
 // loggeer instance
-const logger: Logger = new Logger('getShubobaLinks', true);
+const logger: Logger = new Logger(myConst.APP_NAME, true);
+// scraper
+const scraper = new Scrape(logger);
 // mkdir
-const mkdirManager = new mkdir();
+const mkdirManager = new mkdir(logger);
 // number array
 const makeNumberRange = (start: number, end: number): number[] => [...new Array(end - start).keys()].map(n => n + start);
 
@@ -79,7 +86,7 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
     // combined data
     const urlStr: string = finalUrlArray.join("\n");
     // write file
-    await fs.promises.writeFile(`./txt/${fileName}.txt`, urlStr);
+    await writeFile(`./txt/${fileName}.txt`, urlStr);
     logger.info('getShubobaLinks: txt file output finished.');
     // close browser
     await scraper.doClose();

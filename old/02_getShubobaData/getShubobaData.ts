@@ -6,6 +6,9 @@
 
 'use strict';
 
+//* Constants
+const APP_NAME: string = 'getShubobaData'; // app name
+
 // read modules
 import * as fs from 'fs'; // fs
 import readline from 'readline'; // readline
@@ -20,7 +23,7 @@ const scraper = new Scrape();
 // aggregator
 const csvMaker = new CSV('SJIS');
 // loggeer instance
-const logger: Logger = new Logger('getShubobaData', true);
+const logger: Logger = new Logger(APP_NAME, true);
 // mkdir
 const mkdirManager = new mkdir();
 
