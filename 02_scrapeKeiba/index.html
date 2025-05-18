@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <title>競馬スクレイピングツール</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
+  <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body>
+  <h1 id="maintitle">競馬スクレイピングツール</h1>
+  <div id="buttonarea" class="buttonarea">
+    <div class="operation_area">
+      <h3 id="geturl">URL取得</h3>
+      <button id="geturl_button" class="button-g button-wide" value="regist" onclick="getHorseUrls();">URL取得</button>
+    </div>
+    <div class="operation_area">
+      <h3 id="getcrops">産駒成績取得</h3>
+      <button id="getcrops_button"class="button-g button-wide" value="history" onclick="getCropResults();">産駒成績取得</button>
+    </div>
+    <div class="operation_area">
+      <h3 id="gettraining">調教取得</h3>
+      <button id="gettraining_button"class="button-g button-wide" value="reg" onclick="getTrainings();">調教取得</button>
+    </div>
+    <div class="operation_area">
+      <h3 id="config">設定</h3>
+      <button id="config_button"class="button-g button-6 button-wide" value="reg" onclick="configPage();">設定</button>
+    </div>
+    <div class="operation_area">
+      <button id="exit_button"class="button-g button-1 button-wide" value="exit" onclick="exitPage();">終了</button>
+    </div>
+    <div id="secret" value=""></div>
+  </div>
+  <footer>
+    <p><small>&copy; 2025 Nthree LLC All Rights Reserved. </small></p>
+  </footer>
+
+  <script charset="UTF-8">
+    // variables
+    let secretWd;
+    let appVersion;
+    // japanese flg
+    let japaneseFlg = false;
+    // constants
+    // japanese
+    const APPNAME_STR_JA = '競馬スクレイピングツール';
+    const GETURLS_STR_JA = 'URL取得';
+    const GETCROPS_STR_JA = '産駒成績取得';
+    const GETTRAINING_STR_JA = '調教取得';
+    const CONFIG_STR_JA = '設定';
+    const EXIT_STR_JA = '終了';
+    // english
+    const APPNAME_STR_EN = 'Data HorseData Scraper';
+    const GETURLS_STR_EN = 'Get Url';
+    const GETCROPS_STR_EN = 'Get Crop Results';
+    const GETTRAINING_STR_EN = 'Get Trainings';
+    const CONFIG_STR_EN = 'Config';
+    const EXIT_STR_EN = 'Exit';
+    
+    // doms
+    const maintitleDom = document.getElementById("maintitle");
+    const geturlDom = document.getElementById("geturl");
+    const geturlButtonDom = document.getElementById("geturl_button");
+    const getcropsDom = document.getElementById("getcrops");
+    const getcropsButtonDom = document.getElementById("getcrops_button");
+    const gettrainingDom = document.getElementById("gettraining");
+    const gettrainingButtonDom = document.getElementById("gettraining_button");
+    const configDom = document.getElementById("config");
+    const getconfigButtonDom = document.getElementById("config_button");
+    const exitDom = document.getElementById("exit_button");
+    const secretDom = document.getElementById("secret");
+
+    // be ready
+    window.api.on("ready", arg => {
+        // variables
+        secretWd = arg.secret ?? '';
+        appVersion = arg.version ?? '0.0.0';
+        // change dom
+        secretDom.value = secretWd;
+        // change language
+        changeLanguage(arg.language);
+    });
+
+    // URL取得
+    const getHorseUrls = () => {
+      try {
+        console.log("getHorseUrls mode");
+        window.api.send("url", secretWd);
+
+      } catch (e) {
+        // エラー処理
+        window.api.send("error", e);
+      }
+    }
+    // 産駒成績取得
+    const getCropResults = () => {
+      try {
+        console.log("getCropResults mode");
+        window.api.send("sire", secretWd);
+
+      } catch (e) {
+        // エラー処理
+        window.api.send("error", e);
+      }
+    }
+    // 調教取得
+    const getTrainings = () => {
+      try {
+        console.log("getTrainingsd mode");
+        window.api.send("training", secretWd);
+
+      } catch (e) {
+        // エラー処理
+        window.api.send("error", e);
+      }
+    }
+    // 設定
+    const configPage = () => {
+      try {
+        console.log("configPage mode");
+        window.api.send("config", secretWd);
+
+      } catch (e) {
+        // エラー処理
+        window.api.send("error", e);
+      }
+    }
+    // 終了
+    const exitPage = () => {
+      try {
+        console.log("exitPage mode");
+        window.api.send("exitapp", secretWd);
+
+      } catch (e) {
+        // エラー処理
+        window.api.send("error", e);
+      }
+    }
+    // change language
+    const changeLanguage = lang => {
+        // japanese
+        if(lang == 'japanese') {
+            japaneseFlg = true;
+            document.title = APPNAME_STR_JA;
+            maintitleDom.innerHTML = `${APPNAME_STR_JA} ver${appVersion}`;
+            geturlDom.innerHTML = GETURLS_STR_JA;
+            geturlButtonDom.innerHTML = GETURLS_STR_JA;
+            getcropsDom.innerHTML = GETCROPS_STR_JA;
+            getcropsButtonDom.innerHTML = GETCROPS_STR_JA;
+            gettrainingDom.innerHTML = GETTRAINING_STR_JA;
+            gettrainingButtonDom.innerHTML = GETTRAINING_STR_JA;
+            configDom.innerHTML = CONFIG_STR_JA;
+            getconfigButtonDom.innerHTML = CONFIG_STR_JA;
+            exitDom.innerHTML = EXIT_STR_JA;
+            document.documentElement.setAttribute("lang", 'ja');
+        // english
+        } else {
+          japaneseFlg = false;
+          document.title = APPNAME_STR_EN;
+          maintitleDom.innerHTML = `${APPNAME_STR_EN} ver${appVersion}`;
+          geturlDom.innerHTML = GETURLS_STR_EN;
+          geturlButtonDom.innerHTML = GETURLS_STR_EN;
+          getcropsDom.innerHTML = GETCROPS_STR_EN;
+          getcropsButtonDom.innerHTML = GETCROPS_STR_EN;
+          gettrainingDom.innerHTML = GETTRAINING_STR_EN;
+          gettrainingButtonDom.innerHTML = GETTRAINING_STR_EN;
+          configDom.innerHTML = CONFIG_STR_EN;
+          getconfigButtonDom.innerHTML = CONFIG_STR_EN;
+          exitDom.innerHTML = EXIT_STR_EN;
+          document.documentElement.setAttribute("lang", 'en');
+        }
+    }
+    
+  </script>
+</body>
+
+</html>

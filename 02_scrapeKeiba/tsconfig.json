@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    /* Modules */
+    "module": "commonjs",
+    "baseUrl": "./src",
+    "outDir": "./build",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    /* Emit */
+    //"declaration": true,
+    //"sourceMap": true,
+    /* Type Checking */
+    "strict": true,
+    //"noImplicitAny": true,
+    //"strictNullChecks": true,
+    //"useUnknownInCatchVariables": true,
+    /* Completeness */
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "*": [
+        "./src/@types/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    ".gitignore",
+    ".git"
+  ],
+}
