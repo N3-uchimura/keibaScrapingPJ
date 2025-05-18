@@ -3,32 +3,31 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>競馬スクレイピングツール</title>
+  <title>Data HorseData Scraper</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
   <link rel="stylesheet" href="css/index.css">
 </head>
 
 <body>
-  <h1 id="maintitle">競馬スクレイピングツール</h1>
+  <h1 id="maintitle">Data HorseData Scraper</h1>
   <div id="buttonarea" class="buttonarea">
     <div class="operation_area">
-      <h3 id="geturl">URL取得</h3>
-      <button id="geturl_button" class="button-g button-wide" value="regist" onclick="getHorseUrls();">URL取得</button>
+      <h3 id="geturl">Get Url</h3>
+      Get Url    </div>
+    <div class="operation_area">
+      <h3 id="getcrops">Get Crop Results</h3>
+      <button id="getcrops_button"class="button-g button-wide" value="history" onclick="getCropResults();">Get Crop Results</button>
     </div>
     <div class="operation_area">
-      <h3 id="getcrops">産駒成績取得</h3>
-      <button id="getcrops_button"class="button-g button-wide" value="history" onclick="getCropResults();">産駒成績取得</button>
+      <h3 id="gettraining">Get Trainings</h3>
+      <button id="gettraining_button"class="button-g button-wide" value="reg" onclick="getTrainings();">Get Trainings</button>
     </div>
     <div class="operation_area">
-      <h3 id="gettraining">調教取得</h3>
-      <button id="gettraining_button"class="button-g button-wide" value="reg" onclick="getTrainings();">調教取得</button>
+      <h3 id="config">Config</h3>
+      <button id="config_button"class="button-g button-6 button-wide" value="reg" onclick="configPage();">Config</button>
     </div>
     <div class="operation_area">
-      <h3 id="config">設定</h3>
-      <button id="config_button"class="button-g button-6 button-wide" value="reg" onclick="configPage();">設定</button>
-    </div>
-    <div class="operation_area">
-      <button id="exit_button"class="button-g button-1 button-wide" value="exit" onclick="exitPage();">終了</button>
+      <button id="exit_button"class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
     </div>
     <div id="secret" value=""></div>
   </div>
@@ -37,12 +36,12 @@
   </footer>
 
   <script charset="UTF-8">
-    // variables
-    let secretWd;
-    let appVersion;
-    // japanese flg
-    let japaneseFlg = false;
-    // constants
+    /// variables
+    let secretWd; // secret
+    let appVersion; // app Version
+    let japaneseFlg = false; // japanese flg
+
+    /// constants
     // japanese
     const APPNAME_STR_JA = '競馬スクレイピングツール';
     const GETURLS_STR_JA = 'URL取得';
@@ -57,7 +56,6 @@
     const GETTRAINING_STR_EN = 'Get Trainings';
     const CONFIG_STR_EN = 'Config';
     const EXIT_STR_EN = 'Exit';
-    
     // doms
     const maintitleDom = document.getElementById("maintitle");
     const geturlDom = document.getElementById("geturl");
@@ -71,6 +69,7 @@
     const exitDom = document.getElementById("exit_button");
     const secretDom = document.getElementById("secret");
 
+    /// ipc
     // be ready
     window.api.on("ready", arg => {
         // variables
@@ -82,58 +81,58 @@
         changeLanguage(arg.language);
     });
 
-    // URL取得
+    // URL
     const getHorseUrls = () => {
       try {
         console.log("getHorseUrls mode");
         window.api.send("url", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
-    // 産駒成績取得
+    // crops data
     const getCropResults = () => {
       try {
         console.log("getCropResults mode");
         window.api.send("sire", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
-    // 調教取得
+    // training
     const getTrainings = () => {
       try {
         console.log("getTrainingsd mode");
         window.api.send("training", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
-    // 設定
+    // config
     const configPage = () => {
       try {
         console.log("configPage mode");
         window.api.send("config", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
-    // 終了
+    // exit
     const exitPage = () => {
       try {
         console.log("exitPage mode");
         window.api.send("exitapp", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
@@ -171,7 +170,6 @@
           document.documentElement.setAttribute("lang", 'en');
         }
     }
-    
   </script>
 </body>
 

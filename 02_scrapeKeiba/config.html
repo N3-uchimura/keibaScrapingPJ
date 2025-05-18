@@ -12,10 +12,10 @@
   <h1 id="maintitle">競馬スクレイピングツール設定画面</h1>
   <h4>
     <div class="operation_area"> 
-      <input type="checkbox" id="language" checked><span id="languagearea">日本語</span></div>
+      <input type="checkbox" id="language" checked><span id="languagearea">Japanese</span></div>
   </h4>
     <div class="operation_area">
-      <button id="top_button"class="button-g button-1 button-wide" value="top" onclick="topPage();">トップに戻る</button>
+      <button id="top_button"class="button-g button-1 button-wide" value="top" onclick="topPage();">Goto Top</button>
     </div>
     <div id="secret" value=""></div>
   </div>
@@ -24,28 +24,34 @@
   </footer>
 
   <script charset="UTF-8">
-    // variables
-    let secretWd;
-    // japanese flg
-    let japaneseFlg = false;
-    // constants
+    /// variables
+    let secretWd; // secret
+    let japaneseFlg = false; // japanese flg
+
+    /// constants
     // japanese
+    const APPNAME_STR_JA = '競馬スクレイピングツール設定画面';
     const LANGUAGE_STR_JA = '日本語';
     const GOTOTOP_STR_JA = 'トップに戻る';
     // english
+    const APPNAME_STR_EN = 'Data HorseData Scraper Config';
     const LANGUAGE_STR_EN = 'Japanese';
     const GOTOTOP_STR_EN = 'Goto Top';
     // doms
+    const maintitleDom = document.getElementById("maintitle");
     const languageDom = document.getElementById("language");
     const languageareaDom = document.getElementById("languagearea");
     const gotoTopButtonDom = document.getElementById("top_button");
     const secretDom = document.getElementById("secret");
 
+    /// ipc
     // watch checkbox
     languageDom.addEventListener('change', e => {
-        // change language
+        // language detection
         const fixLang = languageDom.checked ? 'japanese' : 'english';
+        // change language
         changeLanguage(fixLang);
+        // send to main ipc
         window.api.send("language", {language: japaneseFlg, secret: secretWd});
     });
 
@@ -61,10 +67,11 @@
     const topPage = () => {
       try {
         console.log("topPage mode");
+        // send to main ipc
         window.api.send("topapp", secretWd);
 
       } catch (e) {
-        // エラー処理
+        // error
         window.api.send("error", e);
       }
     }
@@ -74,6 +81,7 @@
         if(lang == 'japanese') {
             japaneseFlg = true;
             document.title = APPNAME_STR_JA;
+            maintitleDom.innerHTML = APPNAME_STR_JA;
             languageareaDom.innerHTML = LANGUAGE_STR_JA;
             gotoTopButtonDom.innerHTML = GOTOTOP_STR_JA;
             document.documentElement.setAttribute("lang", 'ja');
@@ -81,12 +89,12 @@
         } else {
           japaneseFlg = false;
           document.title = APPNAME_STR_EN;
+          maintitleDom.innerHTML = APPNAME_STR_EN
           languageareaDom.innerHTML = LANGUAGE_STR_EN;
           gotoTopButtonDom.innerHTML = GOTOTOP_STR_EN;
           document.documentElement.setAttribute("lang", 'en');
         }
     }
-    
   </script>
 </body>
 

@@ -173,18 +173,18 @@ const createWindow = (): void => {
     });
 
   } catch (e: unknown) {
-    // エラー型
+    // error
     if (e instanceof Error) {
-      // メッセージ表示
+      // show error
       dialogMaker.showmessage("error", `${e.message}`);
     }
   }
 };
 
-// サンドボックス有効化
+// enable sandbox
 app.enableSandbox();
 
-// メインプロセス(Nodejs)の多重起動防止
+// avoid double ignition
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   console.log("メインプロセスが多重起動しました。終了します。");
@@ -280,15 +280,8 @@ ipcMain.on("language", async (_, arg) => {
   logger.info("app: exit app");
   // correct
   if (globalSecretKey == arg.secret) {
-    // default language
-    let language: string;
-
-    if (arg.language) {
-      language = 'japanese';
-    } else {
-      language = 'english';
-    }
-    store.set('LANG', language);
+    // set language to storage
+    store.set('LANG', arg.language ? 'japanese' : 'english');
   }
 });
 
@@ -303,6 +296,13 @@ ipcMain.on("exitapp", async (_, arg) => {
       return false;
     }
   }
+});
+
+// error
+ipcMain.on("error", async (_: any, arg: any) => {
+  logger.info("ipc: error mode");
+  // show error
+  dialogMaker.showmessage("error", `${arg})`);
 });
 
 // get horseURL
@@ -345,8 +345,9 @@ ipcMain.on("url", async (_, arg) => {
           const tmpUrl = await scraper.getUrl() ?? '';
           // insert horse name
           tmpObj.horse = rd;
+          // insert url
           tmpObj.url = tmpUrl;
-          logger.debug(tmpUrl);
+
           // url exists
           if (tmpUrl && tmpUrl != '') {
             resultArray.push(tmpObj);
