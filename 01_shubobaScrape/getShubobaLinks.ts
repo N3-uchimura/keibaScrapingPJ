@@ -6,22 +6,15 @@
 
 'use strict';
 
-//* Constants
-const FOREIGN_URL: string = 'a-z'; // target url
 // name space
 import { myConst } from './consts/globalvariables';
 
 // read modules
-import * as path from 'path'; // path
 import { writeFile } from 'node:fs/promises'; // file system
-import { config as dotenv } from 'dotenv'; // dotenv
 import { Scrape } from './class/Scrape0517'; // scraper
 import Logger from './class/Logger'; // logger
 import mkdir from './class/Mkdir0517'; // mdkir
-dotenv({ path: path.join(__dirname, '.env') }); // env
 
-// re define
-const BASE_URL: string = process.env.BASE_URL ?? '';
 // loggeer instance
 const logger: Logger = new Logger(myConst.APP_NAME, true);
 // scraper
@@ -48,7 +41,7 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
         // texts
         let tmpUrlArray: string[] = [];
         // tmp url
-        const tmpUrl: string = BASE_URL + String(i).padStart(2, '0') + '.html';
+        const tmpUrl: string = myConst.BASE_URL + String(i).padStart(2, '0') + '.html';
         // goto page
         await scraper.doGo(tmpUrl);
         // wait
@@ -68,9 +61,9 @@ const makeNumberRange = (start: number, end: number): number[] => [...new Array(
     }
     logger.info('getShubobaLinks: scraping has finished.');
     // filename
-    const fileName: string = FOREIGN_URL;
+    const fileName: string = myConst.FOREIGN_URL;
     // tmp url
-    const foreignUrl: string = BASE_URL + FOREIGN_URL + '.html';
+    const foreignUrl: string = myConst.BASE_URL + fileName + '.html';
     // goto page
     await scraper.doGo(foreignUrl);
     // wait

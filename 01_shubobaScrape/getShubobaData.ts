@@ -8,7 +8,6 @@
 
 // name space
 import { myConst } from './consts/globalvariables';
-const CSV_ENCODING: string = 'SJIS'; // csv encoding
 
 // read modules
 import * as fs from 'node:fs'; // fs
@@ -25,7 +24,7 @@ const logger: Logger = new Logger(myConst.APP_NAME, true);
 // scraper
 const scraper = new Scrape(logger);
 // aggregator
-const csvMaker = new CSV(CSV_ENCODING, logger);
+const csvMaker = new CSV(myConst.CSV_ENCODING, logger);
 // mkdir
 const mkdirManager = new mkdir(logger);
 

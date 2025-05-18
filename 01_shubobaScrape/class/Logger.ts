@@ -14,10 +14,8 @@ import { myConst } from '../consts/globalvariables'; // namespace
 // define modules
 import * as path from 'node:path'; // path
 import * as log4js from 'log4js'; // Logger
-import { config as dotenv } from 'dotenv'; // dotenv
-dotenv({ path: path.join(__dirname, '.env') }); // env
 // re define
-const LOG_LEVEL: string = process.env.LOG_LEVEL ?? 'all';
+const LOG_LEVEL: string = myConst.LOG_LEVEL ?? 'all';
 
 // Logger class
 class Logger {

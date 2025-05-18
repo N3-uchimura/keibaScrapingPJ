@@ -6,31 +6,19 @@
 "use strict";
 
 // name space
-import { myConst } from './consts/globalvariables';
+import { myConst, mySelectors } from './consts/globalvariables';
 
 //* changable Constants
 // secretkey
 let globalSecretKey: string;
 // active course ID
-//const globalActiveIds: string[] = ['202505020801', '202508020801', '202504010601'];
-const globalActiveIds: string[] = ['202504010601'];
+const globalActiveIds: string[] = ['202505020801', '202508020801', '202504010601'];
 // racing course
-//const globalActiveCourseNames: string[] = ['東京', '京都', '新潟'];
-const globalActiveCourseNames: string[] = ['新潟'];
+const globalActiveCourseNames: string[] = ['東京', '京都', '新潟'];
 
 //* Constants
 const WINDOW_WIDTH: number = 1500; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
-const DEFAULT_ENCODING: string = 'utf8'; // encoding
-const CSV_ENCODING: string = 'SJIS'; // csv encoding
-const DEF_URL_QUERY: string = '&type=2&rf=shutuba_submenu'; // query
-const BASE_SELECTOR: string = '#contents > div > table > tbody > tr:nth-child(3) >'; // base
-const TURF_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(13) > a`; // turf
-const TURF_WIN_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(14) > a`; // turf win
-const DIRT_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(15) > a`; // dirt
-const DIRT_WIN_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(16) > a`; // dirt win
-const TURF_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(20)`; // turf average distance
-const DIRT_DIST_SELECTOR: string = `${BASE_SELECTOR} td:nth-child(21)`; // dirt average distance
 
 //* Modules
 import * as path from 'node:path'; // path
@@ -48,13 +36,8 @@ const dir_home =
   process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] ?? "";
 const dir_desktop = path.join(dir_home, "Desktop");
 
-// re define
-const LOG_LEVEL: string = process.env.LOG_LEVEL ?? 'all';
-const DEF_NETKEIBA_URL: string = process.env.BASE_URL!;
-const SIRE_URL: string = process.env.SIRE_BASE_URL!;
-const HORSE_URL: string = process.env.HORSE_BASE_URL!;
-const TRAINING_URL: string = process.env.TRAINING_BASE_URL!;
-const DEF_TRAINING_URL: string = TRAINING_URL + '?race_id=';
+// log level
+const LOG_LEVEL: string = myConst.LOG_LEVEL ?? 'all';
 // netkeiba id
 const netKeibaId: string = process.env.NETKEIBA_ID ?? '';
 // netkeiba pass
@@ -64,7 +47,7 @@ const logger: ELLogger = new ELLogger(myConst.APP_NAME, LOG_LEVEL);
 // scraper
 const scraper = new Scrape(logger);
 // aggregator
-const csvMaker = new CSV(CSV_ENCODING, logger);
+const csvMaker = new CSV(myConst.CSV_ENCODING, logger);
 // dialog
 const dialogMaker: Dialog = new Dialog(logger);
 // crypto
@@ -89,7 +72,7 @@ interface windowOption {
 let resultArray: any[] = [];
 
 // selector array
-const selectorArray: string[] = [TURF_SELECTOR, TURF_WIN_SELECTOR, DIRT_SELECTOR, DIRT_WIN_SELECTOR, TURF_DIST_SELECTOR, DIRT_DIST_SELECTOR];
+const selectorArray: string[] = [mySelectors.TURF_SELECTOR, mySelectors.TURF_WIN_SELECTOR, mySelectors.DIRT_SELECTOR, mySelectors.DIRT_WIN_SELECTOR, mySelectors.TURF_DIST_SELECTOR, mySelectors.DIRT_DIST_SELECTOR];
 // horse array
 const horseDataArray: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
 
@@ -106,7 +89,7 @@ const createWindow = (): void => {
     const windowOptions: windowOption = {
       width: WINDOW_WIDTH, // window width
       height: WINDOW_HEIGHT, // window height
-      defaultEncoding: DEFAULT_ENCODING, // encoding
+      defaultEncoding: myConst.DEFAULT_ENCODING, // encoding
       webPreferences: {
         nodeIntegration: false, // node
         contextIsolation: true, // isolate
@@ -322,8 +305,8 @@ ipcMain.on("url", async (_, arg) => {
       // initialize
       await scraper.init();
       // goto page
-      await scraper.doGo(DEF_NETKEIBA_URL);
-      logger.debug(`scraping ${DEF_NETKEIBA_URL}...`);
+      await scraper.doGo(myConst.BASE_URL);
+      logger.debug(`scraping ${myConst.BASE_URL}...`);
       // wait for loading
       await scraper.doWaitFor(3000);
 
@@ -356,7 +339,7 @@ ipcMain.on("url", async (_, arg) => {
         } catch (e: unknown) {
           logger.error(e);
           // goto page
-          await scraper.doGo(HORSE_URL);
+          await scraper.doGo(myConst.HORSE_BASE_URL);
           // wait for loading
           await scraper.doWaitFor(3000);
         }
@@ -415,10 +398,10 @@ ipcMain.on("sire", async (_, arg) => {
           tmpObj.horse = horses[i];
 
           // goto page
-          await scraper.doGo(SIRE_URL + urls[i]);
+          await scraper.doGo(myConst.SIRE_BASE_URL + urls[i]);
           // wait for selector
           await scraper.doWaitFor(3000);
-          logger.info(`goto ${SIRE_URL + urls[i]}`);
+          logger.info(`goto ${myConst.SIRE_BASE_URL + urls[i]}`);
 
           // get data
           for (let j: number = 0; j < selectorArray.length; j++) {
@@ -492,8 +475,8 @@ ipcMain.on("training", async (_, arg) => {
       // initialize
       await scraper.init();
       // goto netkeiba
-      await scraper.doGo(DEF_NETKEIBA_URL);
-      logger.debug(`goto ${DEF_NETKEIBA_URL}`);
+      await scraper.doGo(myConst.BASE_URL);
+      logger.debug(`goto ${myConst.BASE_URL}`);
       // wait for loading of login button
       await scraper.doWaitFor(2000);
       // click login
@@ -521,7 +504,7 @@ ipcMain.on("training", async (_, arg) => {
         // course
         const targetCourse: string = raceId.slice(0, -2);
         // base url
-        const baseUrl: string = `${DEF_TRAINING_URL}${targetCourse}`;
+        const baseUrl: string = `${myConst.TRAINING_BASE_URL}?race_id=${targetCourse}`;
         // csv filename
         const filePath: string = `${tmpFilePath}_${targetCournseName}.csv`;
 
@@ -533,7 +516,7 @@ ipcMain.on("training", async (_, arg) => {
             // race
             const raceName: string = `${targetCournseName}${j}R`;
             // url
-            const targetUrl: string = `${baseUrl}${String(j).padStart(2, '0')}${DEF_URL_QUERY}`;
+            const targetUrl: string = `${baseUrl}${String(j).padStart(2, '0')}${myConst.DEF_URL_QUERY}`;
             // goto site
             await scraper.doGo(targetUrl);
             // wait for datalist
