@@ -1,20 +1,19 @@
 /**
-/* getkeiba.ts
-/* getkeiba - Getting keiba data from netkeiba. -
+ * getkeiba.ts
+ *
+ * getkeiba - Getting keiba data from netkeiba. -
 **/
 
 "use strict";
 
 // name space
-import { myConst, mySelectors } from './consts/globalvariables';
+import { myConst, mySelectors, myRaces } from './consts/globalvariables';
 
 //* changable Constants
 // secretkey
 let globalSecretKey: string;
-// active course ID
-const globalActiveIds: string[] = ['202505020801', '202508020801', '202504010601'];
-// racing course
-const globalActiveCourseNames: string[] = ['東京', '京都', '新潟'];
+// secretkey
+let globalLanguage: string = 'japanese';
 
 //* Constants
 const WINDOW_WIDTH: number = 1500; // window width
@@ -112,7 +111,6 @@ const createWindow = (): void => {
       globalSecretKey = secretKey;
       // version
       const appVersion = p.version ?? '0.0.0';
-      console.log(appVersion);
       // language
       const language = store.get('LANG') ?? 'japanese';
       // sending obj
@@ -170,7 +168,12 @@ app.enableSandbox();
 // avoid double ignition
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
-  console.log("メインプロセスが多重起動しました。終了します。");
+  // japanese
+  if (globalLanguage == 'japanese') {
+    console.log("メインプロセスが多重起動しました。終了します。");
+  } else {
+    console.log("Double ignition. break.");
+  }
   app.quit();
 }
 
@@ -179,6 +182,17 @@ app.on("ready", async () => {
   logger.info("app: electron is ready");
   // make window
   createWindow();
+  // menu label
+  let displayLabel: string = '';
+  let closeLabel: string = '';
+  // japanese
+  if (globalLanguage == 'japanese') {
+    displayLabel = '表示';
+    closeLabel = '閉じる';
+  } else {
+    displayLabel = 'show';
+    closeLabel = 'close';
+  }
   // app icon
   const icon: Electron.NativeImage = nativeImage.createFromPath(
     path.join(__dirname, "assets/keiba128.ico")
@@ -189,14 +203,14 @@ app.on("ready", async () => {
   const contextMenu: Electron.Menu = Menu.buildFromTemplate([
     // show
     {
-      label: "表示",
+      label: displayLabel,
       click: () => {
         mainWindow.show();
       },
     },
     // close
     {
-      label: "閉じる",
+      label: closeLabel,
       click: () => {
         isQuiting = true;
         app.quit();
@@ -263,9 +277,12 @@ ipcMain.on("language", async (_, arg) => {
   logger.info("app: exit app");
   // correct
   if (globalSecretKey == arg.secret) {
+    // set globally
+    globalLanguage = arg.language ? 'japanese' : 'english';
     // set language to storage
-    store.set('LANG', arg.language ? 'japanese' : 'english');
+    store.set('LANG', globalLanguage);
   }
+
 });
 
 // exit
@@ -495,12 +512,12 @@ ipcMain.on("training", async (_, arg) => {
       await scraper.doWaitFor(3000);
 
       // loop each races
-      for await (const [idx, raceId] of Object.entries(globalActiveIds)) {
+      for await (const [idx, raceId] of Object.entries(myRaces.TODAY_RACENOS)) {
 
         // index
         const targetIdx: number = Number(idx);
         // course name
-        const targetCournseName: string = globalActiveCourseNames[targetIdx];
+        const targetCournseName: string = myRaces.TODAY_RACES[targetIdx];
         // course
         const targetCourse: string = raceId.slice(0, -2);
         // base url
@@ -574,7 +591,15 @@ ipcMain.on("training", async (_, arg) => {
         }
 
         // header
-        let columns: string[] = ['馬名', '実施日', '競馬場', '馬場状態', '強さ', 'レビュー', 'ラップ1', 'ラップ2', 'ラップ3', 'ラップ4', 'ラップ5', '色1', '色2', '色3', '色4', '色5'];
+        let columns: string[]
+        // japanese
+        if (globalLanguage == 'japanese') {
+          // header
+          columns = ['馬名', '実施日', '競馬場', '馬場状態', '強さ', 'レビュー', 'ラップ1', 'ラップ2', 'ラップ3', 'ラップ4', 'ラップ5', '色1', '色2', '色3', '色4', '色5'];
+        } else {
+          // header
+          columns = ['horsename', 'date', 'track', 'condition', 'strength', 'review', 'lap1', 'lap2', 'lap3', 'lap4', 'lap5', 'color1', 'color2', 'color3', 'color4', 'color5'];
+        }
         // finaljson
         let finalJsonArray: any[] = [];
         // all races
