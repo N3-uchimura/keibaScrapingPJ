@@ -9,7 +9,7 @@
 // name space
 import { myConst, mySelectors, myRaces } from './consts/globalvariables';
 
-//* changable Constants
+//* changeable Variables
 // secretkey
 let globalSecretKey: string;
 // secretkey
