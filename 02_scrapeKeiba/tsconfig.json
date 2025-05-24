@@ -7,26 +7,20 @@
     "outDir": "./build",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    /* Emit */
-    //"declaration": true,
-    //"sourceMap": true,
     /* Type Checking */
     "strict": true,
-    //"noImplicitAny": true,
-    //"strictNullChecks": true,
-    //"useUnknownInCatchVariables": true,
     /* Completeness */
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    //"resolveJsonModule": true,
     "paths": {
       "*": [
-        "./src/@types/*"
+        "../@types/*"
       ]
     }
   },
   "include": [
-    "src"
+    "./src"
   ],
   "exclude": [
     "node_modules",

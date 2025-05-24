@@ -320,13 +320,13 @@ export class Scrape {
   doSingleEval(selector: string, property: string): Promise<string> {
     return new Promise(async (resolve, _) => {
       try {
-        Scrape.logger.debug('scrape: doSingleEval mode.');
+        //Scrape.logger.debug('scrape: doSingleEval mode.');
         // target item
         const exists: boolean = await Scrape.page.$eval(selector, () => true).catch(() => false);
 
         // no result
         if (!exists) {
-          console.log('not exists');
+          Scrape.logger.debug('not exists');
           resolve('');
 
         } else {
@@ -346,12 +346,10 @@ export class Scrape {
               resolve(data);
 
             } else {
-              console.log('nodata error');
               resolve('');
             }
 
           } else {
-            console.log('target null');
             resolve('');
           }
         }
@@ -367,7 +365,7 @@ export class Scrape {
   doMultiEval(selector: string, property: string): Promise<string[]> {
     return new Promise(async (resolve, reject) => {
       try {
-        Scrape.logger.debug('scrape: doMultiEval mode.');
+        //Scrape.logger.debug('scrape: doMultiEval mode.');
         // data set
         let datas: string[] = [];
         // target list
@@ -398,7 +396,7 @@ export class Scrape {
   doWaitFor(time: number): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        Scrape.logger.debug('scrape: doWaitFor mode.');
+        //Scrape.logger.debug('scrape: doWaitFor mode.');
         // wait for time
         await setTimeout(time);
         resolve();
@@ -456,7 +454,7 @@ export class Scrape {
   doCheckSelector(elem: string): Promise<boolean> {
     return new Promise(async (resolve, reject) => {
       try {
-        Scrape.logger.debug('scrape: doCheckSelector mode.');
+        //Scrape.logger.debug('scrape: doCheckSelector mode.');
         // target item
         const exists: boolean = await Scrape.page.$eval(elem, () => true).catch(() => false);
         // return true/false

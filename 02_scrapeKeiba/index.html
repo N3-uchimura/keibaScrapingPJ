@@ -13,21 +13,21 @@
   <div id="buttonarea" class="buttonarea">
     <div class="operation_area">
       <h3 id="geturl">Get Url</h3>
-      Get Url    </div>
+      <button id="geturl_button" class="button-g button-wide" value="urls" onclick="getHorseUrls();">Get Urls</button>
     <div class="operation_area">
       <h3 id="getcrops">Get Crop Results</h3>
-      <button id="getcrops_button"class="button-g button-wide" value="history" onclick="getCropResults();">Get Crop Results</button>
+      <button id="getcrops_button" class="button-g button-wide" value="crops" onclick="getCropResults();">Get Crop Results</button>
     </div>
     <div class="operation_area">
       <h3 id="gettraining">Get Trainings</h3>
-      <button id="gettraining_button"class="button-g button-wide" value="reg" onclick="getTrainings();">Get Trainings</button>
+      <button id="gettraining_button" class="button-g button-wide" value="trainings" onclick="getTrainings();">Get Trainings</button>
     </div>
     <div class="operation_area">
       <h3 id="config">Config</h3>
-      <button id="config_button"class="button-g button-6 button-wide" value="reg" onclick="configPage();">Config</button>
+      <button id="config_button" class="button-g button-6 button-wide" value="config" onclick="configPage();">Config</button>
     </div>
     <div class="operation_area">
-      <button id="exit_button"class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
+      <button id="exit_button" class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
     </div>
     <div id="secret" value=""></div>
   </div>
@@ -38,7 +38,6 @@
   <script charset="UTF-8">
     /// variables
     let secretWd; // secret
-    let appVersion; // app Version
     let japaneseFlg = false; // japanese flg
 
     /// constants
@@ -70,11 +69,12 @@
     const secretDom = document.getElementById("secret");
 
     /// ipc
+    window.api.send("beforeready");
     // be ready
     window.api.on("ready", arg => {
+      console.log("initialize mode");
         // variables
         secretWd = arg.secret ?? '';
-        appVersion = arg.version ?? '0.0.0';
         // change dom
         secretDom.value = secretWd;
         // change language
@@ -85,7 +85,9 @@
     const getHorseUrls = () => {
       try {
         console.log("getHorseUrls mode");
-        window.api.send("url", secretWd);
+        // variables
+        const tmpSecretWd = secretDom.value;
+        window.api.send("url", tmpSecretWd);
 
       } catch (e) {
         // error
@@ -96,7 +98,9 @@
     const getCropResults = () => {
       try {
         console.log("getCropResults mode");
-        window.api.send("sire", secretWd);
+        // variables
+        const tmpSecretWd = secretDom.value;
+        window.api.send("sire", tmpSecretWd);
 
       } catch (e) {
         // error
@@ -107,7 +111,9 @@
     const getTrainings = () => {
       try {
         console.log("getTrainingsd mode");
-        window.api.send("training", secretWd);
+        // variables
+        const tmpSecretWd = secretDom.value;
+        window.api.send("training", tmpSecretWd);
 
       } catch (e) {
         // error
@@ -118,7 +124,9 @@
     const configPage = () => {
       try {
         console.log("configPage mode");
-        window.api.send("config", secretWd);
+        // variables
+        const tmpSecretWd = secretDom.value;
+        window.api.send("config", tmpSecretWd);
 
       } catch (e) {
         // error
@@ -129,7 +137,9 @@
     const exitPage = () => {
       try {
         console.log("exitPage mode");
-        window.api.send("exitapp", secretWd);
+        // variables
+        const tmpSecretWd = secretDom.value;
+        window.api.send("exitapp", tmpSecretWd);
 
       } catch (e) {
         // error
@@ -142,7 +152,7 @@
         if(lang == 'japanese') {
             japaneseFlg = true;
             document.title = APPNAME_STR_JA;
-            maintitleDom.innerHTML = `${APPNAME_STR_JA} ver${appVersion}`;
+            maintitleDom.innerHTML = APPNAME_STR_JA;
             geturlDom.innerHTML = GETURLS_STR_JA;
             geturlButtonDom.innerHTML = GETURLS_STR_JA;
             getcropsDom.innerHTML = GETCROPS_STR_JA;
@@ -157,7 +167,7 @@
         } else {
           japaneseFlg = false;
           document.title = APPNAME_STR_EN;
-          maintitleDom.innerHTML = `${APPNAME_STR_EN} ver${appVersion}`;
+          maintitleDom.innerHTML = APPNAME_STR_EN;
           geturlDom.innerHTML = GETURLS_STR_EN;
           geturlButtonDom.innerHTML = GETURLS_STR_EN;
           getcropsDom.innerHTML = GETCROPS_STR_EN;

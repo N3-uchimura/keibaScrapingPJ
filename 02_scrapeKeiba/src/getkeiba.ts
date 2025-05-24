@@ -23,7 +23,6 @@ const WINDOW_HEIGHT: number = 1000; // window height
 import * as path from 'node:path'; // path
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
-import * as p from '../package.json';
 import { Scrape } from './class/ElScrape0517'; // custom Scraper
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
@@ -104,23 +103,7 @@ const createWindow = (): void => {
     // ready
     mainWindow.once("ready-to-show", async () => {
       // dev mode
-      mainWindow.webContents.openDevTools();
-      // random key
-      const secretKey: string = await cryptoMaker.random(10);
-      // save globally
-      globalSecretKey = secretKey;
-      // version
-      const appVersion = p.version ?? '0.0.0';
-      // language
-      const language = store.get('LANG') ?? 'japanese';
-      // sending obj
-      const initObj = {
-        "secret": secretKey, // secret
-        "version": appVersion, // app version
-        "language": language // language
-      }
-      // be ready
-      mainWindow.send("ready", initObj);
+      //mainWindow.webContents.openDevTools();
     });
 
     // minimize and stay on tray
@@ -170,9 +153,9 @@ const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   // japanese
   if (globalLanguage == 'japanese') {
-    console.log("メインプロセスが多重起動しました。終了します。");
+    dialogMaker.showmessage("error", "メインプロセスが多重起動しました。終了します。");
   } else {
-    console.log("Double ignition. break.");
+    dialogMaker.showmessage("error", "Double ignition. break.");
   }
   app.quit();
 }
@@ -182,6 +165,7 @@ app.on("ready", async () => {
   logger.info("app: electron is ready");
   // make window
   createWindow();
+
   // menu label
   let displayLabel: string = '';
   let closeLabel: string = '';
@@ -221,15 +205,17 @@ app.on("ready", async () => {
   mainTray.setContextMenu(contextMenu);
   // show on double click
   mainTray.on("double-click", () => mainWindow.show());
+
 });
 
 // activated
-app.on("activate", () => {
+app.on("activate", async () => {
   // no window
   if (BrowserWindow.getAllWindows().length === 0) {
     // reboot
     createWindow();
   }
+
 });
 
 // quit button
@@ -246,6 +232,24 @@ app.on("window-all-closed", () => {
 });
 
 /* IPC */
+// ready
+ipcMain.on("beforeready", async (_, arg) => {
+  logger.info("app: beforeready app");
+  // random key
+  const secretKey: string = await cryptoMaker.random(10);
+  // save globally
+  globalSecretKey = secretKey;
+  // language
+  const language = 'japanese';
+  // sending obj
+  const initObj = {
+    "secret": secretKey, // secret
+    "language": language // language
+  }
+  // be ready
+  mainWindow.send("ready", initObj);
+});
+
 // config
 ipcMain.on("config", async (_, arg) => {
   logger.info("app: config app");
@@ -355,8 +359,9 @@ ipcMain.on("url", async (_, arg) => {
 
         } catch (e: unknown) {
           logger.error(e);
+        } finally {
           // goto page
-          await scraper.doGo(myConst.HORSE_BASE_URL);
+          await scraper.doGo(myConst.BASE_URL);
           // wait for loading
           await scraper.doWaitFor(3000);
         }
@@ -370,8 +375,9 @@ ipcMain.on("url", async (_, arg) => {
       // end message
       dialogMaker.showmessage('info', 'completed.');
       logger.info('completed.');
-      // close window
-      mainWindow.close();
+      // close scraper
+      await scraper.doClose();
+
     } else {
       // key error
       throw new Error('ipc: illegal secret key');
@@ -393,8 +399,8 @@ ipcMain.on("sire", async (_, arg) => {
       // read csv file
       const tmpRecords: any = await csvMaker.getCsvData(filename);
       // extract first column
-      const urls: string[] = tmpRecords.record.map((item: any) => item.urls);
-      const horses: string[] = tmpRecords.record.map((item: any) => item.horse);
+      const urls: string[] = tmpRecords.record.map((item: any) => item[1]);
+      const horses: string[] = tmpRecords.record.map((item: any) => item[0]);
       // initialize
       await scraper.init();
 
@@ -463,8 +469,9 @@ ipcMain.on("sire", async (_, arg) => {
       // end message
       dialogMaker.showmessage('info', 'completed.');
       logger.info('completed.');
-      // close window
-      mainWindow.close();
+      // close scraper
+      await scraper.doClose();
+
     } else {
       // key error
       throw new Error('ipc: illegal secret key');
@@ -481,6 +488,8 @@ ipcMain.on("training", async (_, arg) => {
     // correct
     if (globalSecretKey == arg) {
       logger.info("ipc: gettraining mode");
+      // header
+      const trainingColumns: string[] = ['race', 'horse', 'date', 'place', 'condition', 'strength', 'review', 'lap1', 'lap2', 'lap3', 'lap4', 'lap5', 'color1', 'color2', 'color3', 'color4', 'color5'];
       // for race loop
       const racenums: number[] = [...Array(2)].map((_, i) => i + 1);
       // formattedDate
@@ -513,7 +522,8 @@ ipcMain.on("training", async (_, arg) => {
 
       // loop each races
       for await (const [idx, raceId] of Object.entries(myRaces.TODAY_RACENOS)) {
-
+        // finaljson
+        let finalJsonArray: any[] = [];
         // index
         const targetIdx: number = Number(idx);
         // course name
@@ -528,14 +538,13 @@ ipcMain.on("training", async (_, arg) => {
         // loop each races
         for await (let j of racenums) {
           try {
-            // last array
-            let finalArray: any = [];
-            // race
-            const raceName: string = `${targetCournseName}${j}R`;
+            // tmpJsonArray
+            let tmpJsonArray: any[] = [];
             // url
             const targetUrl: string = `${baseUrl}${String(j).padStart(2, '0')}${myConst.DEF_URL_QUERY}`;
             // goto site
             await scraper.doGo(targetUrl);
+            logger.debug(`scraping ${targetUrl}`);
             // wait for datalist
             await scraper.doWaitFor(3000);
             // for loop
@@ -543,12 +552,34 @@ ipcMain.on("training", async (_, arg) => {
             // loop each horses
             for await (let i of horsenums) {
               try {
+                // empty array
+                let tmpObj: { [key: string]: string } = {
+                  race: '', // race
+                  horse: '', // horse name
+                  date: '', // date
+                  place: '', // training center
+                  condition: '', // field condition
+                  strength: '', // training strength
+                  review: '', // review comment
+                  lap1: '', // lap time
+                  lap2: '', // lap time
+                  lap3: '', // lap time
+                  lap4: '', // lap time
+                  lap5: '', // lap time
+                  color1: '', // training color
+                  color2: '', // training color
+                  color3: '', // training color
+                  color4: '', // training color
+                  color5: '', // training color
+                };
                 await scraper.doWaitFor(1000);
                 // no element break
                 if (!await scraper.doCheckSelector(`.OikiriDataHead${i} .Horse_Info .Horse_Name a`)) {
                   break;
                 }
                 const postArray: any = await Promise.all([
+                  // race no
+                  String(j),
                   // horse name
                   scraper.doSingleEval(`.OikiriDataHead${i} .Horse_Info .Horse_Name a`, 'innerHTML'),
                   // date
@@ -567,89 +598,52 @@ ipcMain.on("training", async (_, arg) => {
                   scraper.doMultiEval(`.OikiriDataHead${i} .TrainingTimeData .TrainingTimeDataList li`, 'className'),
                 ]);
 
-                // set to array
-                finalArray.push(postArray);
-                // wait 0.5 sec
-                await scraper.doWaitFor(500);
+                // not empty
+                if (postArray.length > 0) {
+                  // set each value
+                  tmpObj.race = postArray[0];
+                  tmpObj.horse = postArray[1];
+                  tmpObj.date = postArray[2];
+                  tmpObj.place = postArray[3];
+                  tmpObj.condition = postArray[4];
+                  tmpObj.strength = postArray[5];
+                  tmpObj.review = postArray[6];
+                  tmpObj.lap1 = postArray[7][0];
+                  tmpObj.lap2 = postArray[7][1];
+                  tmpObj.lap3 = postArray[7][2];
+                  tmpObj.lap4 = postArray[7][3];
+                  tmpObj.lap5 = postArray[7][4];
+                  tmpObj.color1 = postArray[8][0];
+                  tmpObj.color2 = postArray[8][1];
+                  tmpObj.color3 = postArray[8][2];
+                  tmpObj.color4 = postArray[8][3];
+                  tmpObj.color5 = postArray[8][4];
+                  // set to json
+                  tmpJsonArray.push(tmpObj);
+
+                } else {
+                  tmpJsonArray.push(tmpObj);
+                }
 
               } catch (e) {
                 logger.error(e);
                 break;
               }
             }
-
-            // put into wholearray
-            wholeArray.push(finalArray);
-            // wait 0.5 sec
-            await scraper.doWaitFor(500);
-            logger.debug(`${raceName} finished`);
+            finalJsonArray.push(tmpJsonArray);
+            console.log(finalJsonArray);
 
           } catch (err2: unknown) {
             // error
             logger.error(err2);
           }
         }
-
-        // header
-        let columns: string[]
-        // japanese
-        if (globalLanguage == 'japanese') {
-          // header
-          columns = ['馬名', '実施日', '競馬場', '馬場状態', '強さ', 'レビュー', 'ラップ1', 'ラップ2', 'ラップ3', 'ラップ4', 'ラップ5', '色1', '色2', '色3', '色4', '色5'];
-        } else {
-          // header
-          columns = ['horsename', 'date', 'track', 'condition', 'strength', 'review', 'lap1', 'lap2', 'lap3', 'lap4', 'lap5', 'color1', 'color2', 'color3', 'color4', 'color5'];
-        }
-        // finaljson
-        let finalJsonArray: any[] = [];
-        // all races
-        wholeArray.forEach((races: any) => {
-          // for training
-          races.forEach((data: any) => {
-
-            // empty array
-            let tmpObj: { [key: string]: string } = {
-              horse: '', // horse name
-              date: '', // date
-              place: '', // training center
-              condition: '', // field condition
-              strength: '', // training strength
-              review: '', // review comment
-              time1: '', // rap time
-              time2: '', // rap time
-              time3: '', // rap time
-              time4: '', // rap time
-              time5: '', // rap time
-              color1: '', // training color
-              color2: '', // training color
-              color3: '', // training color
-              color4: '', // training color
-              color5: '', // training color
-            };
-            // set each value
-            tmpObj.horse = data[0];
-            tmpObj.date = data[1];
-            tmpObj.place = data[2];
-            tmpObj.condition = data[3];
-            tmpObj.strength = data[4];
-            tmpObj.review = data[5];
-            tmpObj.time1 = data[6][0];
-            tmpObj.time2 = data[6][1];
-            tmpObj.time3 = data[6][2];
-            tmpObj.time4 = data[6][3];
-            tmpObj.time5 = data[6][4];
-            tmpObj.color1 = data[7][0];
-            tmpObj.color2 = data[7][1];
-            tmpObj.color3 = data[7][2];
-            tmpObj.color4 = data[7][3];
-            tmpObj.color5 = data[7][4];
-            // set to json
-            finalJsonArray.push(tmpObj);
-          });
-        });
         // write data
-        await csvMaker.makeCsvData(finalJsonArray, columns, filePath);
+        await csvMaker.makeCsvData(finalJsonArray.flat(), trainingColumns, filePath);
         logger.info(`csv completed.`);
+        // wait 0.5 sec
+        await scraper.doWaitFor(1500);
+
       }
     } else {
       // key error
@@ -658,8 +652,6 @@ ipcMain.on("training", async (_, arg) => {
 
   } catch (e: unknown) {
     logger.error(e);
-  } finally {
-    // close browser
-    await scraper.doClose();
   }
+
 });
