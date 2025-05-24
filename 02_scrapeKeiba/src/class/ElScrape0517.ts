@@ -9,18 +9,6 @@
 'use strict';
 
 const DISABLE_EXTENSIONS: string = '--disable-extensions'; // disable extension
-const ALLOW_INSECURE: string = '--allow-running-insecure-content'; // allow insecure content
-const IGNORE_CERT_ERROR: string = '--ignore-certificate-errors'; // ignore cert-errors
-const NO_SANDBOX: string = '--no-sandbox'; // no sandbox
-const DISABLE_SANDBOX: string = '--disable-setuid-sandbox'; // no setup sandbox
-const DISABLE_DEV_SHM: string = '--disable-dev-shm-usage'; // no dev shm
-const DISABLE_GPU: string = '--disable-gpu'; // no gpu
-const NO_FIRST_RUN: string = '--no-first-run'; // no first run
-const NO_ZYGOTE: string = '--no-zygote'; // no zygote
-const MAX_SCREENSIZE: string = '--start-maximized'; // max screen
-const DISABLE_BALANCED_MODE: string = '--disable-features=HttpsFirstBalancedModeAutoEnable';
-const DEF_USER_AGENT: string =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'; // useragent
 
 // define modules
 import { setTimeout } from 'node:timers/promises'; // wait for seconds
@@ -61,20 +49,7 @@ export class Scrape {
         const puppOptions: puppOption = {
           headless: true, // no display mode
           ignoreDefaultArgs: [DISABLE_EXTENSIONS], // ignore extensions
-          args: [
-            /*
-            NO_SANDBOX,
-            DISABLE_SANDBOX,
-            DISABLE_DEV_SHM,
-            DISABLE_GPU,
-            NO_FIRST_RUN,
-            NO_ZYGOTE,
-            ALLOW_INSECURE,
-            IGNORE_CERT_ERROR,
-            MAX_SCREENSIZE,
-            DISABLE_BALANCED_MODE
-            */
-          ], // args
+          args: [], // args
         };
         // lauch browser
         Scrape.browser = await puppeteer.launch(puppOptions);

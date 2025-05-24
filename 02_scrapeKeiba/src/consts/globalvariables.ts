@@ -9,7 +9,7 @@
 export namespace myConst {
   export const COMPANY_NAME: string = "nthree";
   export const APP_NAME: string = "getKeiba";
-  export const LOG_LEVEL: string = "all";
+  export const LOG_LEVEL: string = "info";
   export const DEFAULT_ENCODING: string = "utf8";
   export const CSV_ENCODING: string = "SJIS";
   export const DEF_URL_QUERY: string = "&type=2&rf=shutuba_submenu";
@@ -32,8 +32,6 @@ export namespace mySelectors {
 
 // races
 export namespace myRaces {
-  export const TODAY_RACES: string[] = ['新潟'];
-  export const TODAY_RACENOS: string[] = ['202504010702'];
-  //export const TODAY_RACES: string[] = ['東京', '京都', '新潟'];
-  //export const TODAY_RACENOS: string[] = ['202505020902', '202508020902', '202504010702'];
+  export const TODAY_RACES: string[] = ['東京', '京都', '新潟'];
+  export const TODAY_RACENOS: string[] = ['202505020902', '202508020902', '202504010702'];
 }

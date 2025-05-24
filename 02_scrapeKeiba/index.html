@@ -26,10 +26,13 @@
       <h3 id="config">Config</h3>
       <button id="config_button" class="button-g button-6 button-wide" value="config" onclick="configPage();">Config</button>
     </div>
+    <div class="progressarea">
+      <div>success:<span id="success"></span>/<span id="successtotal"></span></div>
+      <div>fail:<span id="fail"></span>/<span id="failtotal"></span></div>
+    </div>
     <div class="operation_area">
       <button id="exit_button" class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
     </div>
-    <div id="secret" value=""></div>
   </div>
   <footer>
     <p><small>&copy; 2025 Nthree LLC All Rights Reserved. </small></p>
@@ -37,8 +40,7 @@
 
   <script charset="UTF-8">
     /// variables
-    let secretWd; // secret
-    let japaneseFlg = false; // japanese flg
+    let japaneseFlg = true; // japanese flg
 
     /// constants
     // japanese
@@ -66,28 +68,52 @@
     const configDom = document.getElementById("config");
     const getconfigButtonDom = document.getElementById("config_button");
     const exitDom = document.getElementById("exit_button");
-    const secretDom = document.getElementById("secret");
+    const successDom = document.getElementById('success');
+    const failDom = document.getElementById('fail');
+    const successtotalDom = document.getElementById('successtotal');
+    const failtotalDom = document.getElementById('failtotal');
 
     /// ipc
     window.api.send("beforeready");
+
     // be ready
     window.api.on("ready", arg => {
       console.log("initialize mode");
-        // variables
-        secretWd = arg.secret ?? '';
-        // change dom
-        secretDom.value = secretWd;
         // change language
-        changeLanguage(arg.language);
+        changeLanguage(arg);
+    });
+
+    // be ready
+    window.api.on("topready", arg => {
+      // change language
+      changeLanguage(arg);
+    });
+
+    // total
+    window.api.on('total', arg => {
+      // successtotal
+      successtotalDom.innerHTML = arg;
+      // failtotal
+      failtotalDom.innerHTML = arg;
+    });
+
+    // success
+    window.api.on('success', arg => {
+      // success dom
+      successDom.innerHTML = arg;
+    });
+
+    // fail
+    window.api.on('fail', arg => {
+      // fail dom
+      failDom.innerHTML = arg;
     });
 
     // URL
     const getHorseUrls = () => {
       try {
         console.log("getHorseUrls mode");
-        // variables
-        const tmpSecretWd = secretDom.value;
-        window.api.send("url", tmpSecretWd);
+        window.api.send("url");
 
       } catch (e) {
         // error
@@ -98,9 +124,7 @@
     const getCropResults = () => {
       try {
         console.log("getCropResults mode");
-        // variables
-        const tmpSecretWd = secretDom.value;
-        window.api.send("sire", tmpSecretWd);
+        window.api.send("sire");
 
       } catch (e) {
         // error
@@ -111,9 +135,7 @@
     const getTrainings = () => {
       try {
         console.log("getTrainingsd mode");
-        // variables
-        const tmpSecretWd = secretDom.value;
-        window.api.send("training", tmpSecretWd);
+        window.api.send("training");
 
       } catch (e) {
         // error
@@ -124,9 +146,7 @@
     const configPage = () => {
       try {
         console.log("configPage mode");
-        // variables
-        const tmpSecretWd = secretDom.value;
-        window.api.send("config", tmpSecretWd);
+        window.api.send("config", japaneseFlg);
 
       } catch (e) {
         // error
@@ -137,9 +157,7 @@
     const exitPage = () => {
       try {
         console.log("exitPage mode");
-        // variables
-        const tmpSecretWd = secretDom.value;
-        window.api.send("exitapp", tmpSecretWd);
+        window.api.send("exitapp");
 
       } catch (e) {
         // error
