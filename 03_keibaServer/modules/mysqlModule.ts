@@ -1,52 +1,52 @@
 /**
  * mysqlModule.ts
  *
- * module：MYSQL用
+ * module：MYSQL
  **/
 
 'use strict';
 
-// 定数
+// namespace
 const MODULE_NAME: string = 'mysql';
 
 // import global interface
 import { } from '../@types/globaljoinsql.d';
 
-// モジュール
+// modules
 import * as path from 'path'; // path
 import { config as dotenv } from 'dotenv'; // dotenv
 import Logger from '../class/Logger'; // logger
 import SQL from '../class/MySqlJoin0427'; // sql
-// モジュール設定
+// dotenv setting
 dotenv({ path: path.join(__dirname, '../.env') });
-// ロガー
+// logger
 const logger: Logger = new Logger(MODULE_NAME);
 
-// DB設定
+// DB setting
 const myDB: SQL = new SQL(
-  process.env.SQL_HOST!, // ホスト名
-  process.env.SQL_COMMON_USER!, // ユーザ名
-  process.env.SQL_COMMON_PASS!, // ユーザパスワード
-  Number(process.env.SQL_PORT), // ポートNO
-  process.env.SQL_DBNAME!, // DB名
-  logger, // ロガー
+  process.env.SQL_HOST!, // hostname
+  process.env.SQL_COMMON_USER!, // username
+  process.env.SQL_COMMON_PASS!, // userpass
+  Number(process.env.SQL_PORT), // portNO
+  process.env.SQL_DBNAME!, // DB name
+  logger, // logger
 );
 
 /* count */
-// アセット数カウント
+// count assets
 export const countAssets = async (table: string, columns: string[], data: any[][]): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.debug('mysql: countAssets mode');
-      // 対象データ
+      // args
       const assetCountArgs: countargs = {
-        table: table, // テーブル
-        columns: columns, // カラム
-        values: data, // 値
+        table: table, // table
+        columns: columns, // columns
+        values: data, // values
       };
-      // 対象データ取得
+      // get count
       const targetUserCount: number = await myDB.countDB(assetCountArgs);
-      // ユーザ数
+      // get number of assets
       resolve(targetUserCount);
       logger.debug('mysql: countAssets end');
 
@@ -59,30 +59,30 @@ export const countAssets = async (table: string, columns: string[], data: any[][
 };
 
 /* select */
-// アセット選択
+// select assets
 export const selectAsset = async (table: string, columns: string[], values: any[][], fields?: string[]): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.debug('mysql: selectAsset mode');
       // 対象データ
       const assetSelectArgs: selectargs = {
-        table: table, // テーブル
-        columns: columns, // カラム
-        values: values, // 値
-        fields: fields // 選択カラム
+        table: table, // table
+        columns: columns, // columns
+        values: values, // values
+        fields: fields // fields
       };
-      // 対象データ取得
+      // get target assets
       const targetAssetData: any = await myDB.selectDB(assetSelectArgs);
-      // 結果
+      // error
       if (targetAssetData == 'error') {
-        // DBエラー
+        // DB error
         throw new Error('mysql: selectAsset error');
       } else if (targetAssetData == 'empty') {
-        // ヒットなし
+        // empty
         resolve([]);
         logger.debug('mysql: selectAsset empty');
       } else {
-        // 結果
+        // result
         resolve(targetAssetData);
         logger.debug('mysql: selectAsset end');
       }
@@ -95,35 +95,35 @@ export const selectAsset = async (table: string, columns: string[], values: any[
   });
 };
 
-// アセット選択
+// select assets with join
 export const selectJoinAsset = async (table: string, jointable: string, columns: string[], values: any[][], joincolumns: string[], joinvalues: any[][], fields: string[]): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.debug('mysql: selectJoinAsset mode');
-      // 対象データ
+      // join arg
       const selectJoinAssetObj: joinargs = {
-        table: table, // テーブル
-        columns: columns, // カラム
-        values: values, // 値
-        originid: `${jointable}_id`,
-        jointable: jointable,
-        joincolumns: joincolumns,
-        joinvalues: joinvalues, // 値
-        joinid: 'id',
-        fields: fields,
+        table: table, // table
+        columns: columns, // columns
+        values: values, // values
+        originid: `${jointable}_id`, // join base id
+        jointable: jointable, // joined table
+        joincolumns: joincolumns, // joined columns
+        joinvalues: joinvalues, // joined values
+        joinid: 'id', // join target id
+        fields: fields, // fields
       };
-      // 該当ユーザ抽出
+      // extract joined assets
       const selectedJoinAssetData: any = await myDB.selectJoinDB(selectJoinAssetObj);
-      // 結果
+      // error
       if (selectedJoinAssetData == 'error') {
-        // DBエラー
+        // DB error
         throw new Error('mysql: selectJoinAsset error');
       } else if (selectedJoinAssetData == 'empty') {
-        // ヒットなし
+        // empty
         resolve([]);
         logger.debug('mysql: selectJoinAsset empty');
       } else {
-        // 成功
+        // success
         resolve(selectedJoinAssetData);
         logger.debug('mysql: selectJoinAsset end');
       }
@@ -136,77 +136,30 @@ export const selectJoinAsset = async (table: string, jointable: string, columns:
   });
 };
 
-// アセット選択
-export const selectDoubleJoinAsset = async (table: string, jointable1: string, jointable2: string, columns: string[], values: any[][], joincolumns1: string[], joinvalues1: any[][], joincolumns2: string[], joinvalues2: any[][], fields: string[]): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      logger.debug('mysql: selectDoubleJoinAsset mode');
-
-      // 対象データ
-      const selectJoinAssetObj: joindoubleargs = {
-        table: table, // テーブル
-        columns: columns, // カラム
-        values: values, // 値
-        originid1: `${jointable1}_id`,
-        originid2: `${jointable2}_id`,
-        jointable1: jointable1,
-        jointable2: jointable2,
-        joincolumns1: joincolumns1,
-        joincolumns2: joincolumns2,
-        joinvalues1: joinvalues1, // 値
-        joinvalues2: joinvalues2, // 値
-        joinid1: `id`,
-        joinid2: 'id',
-        fields: fields,
-      };
-      // 該当ユーザ抽出
-      const selectedJoinAssetData: any = await myDB.selectDoubleJoinDB(selectJoinAssetObj);
-      // 結果
-      if (selectedJoinAssetData == 'error') {
-        // DBエラー
-        throw new Error('mysql: selectDoubleJoinAsset error');
-      } else if (selectedJoinAssetData == 'empty') {
-        // ヒットなし
-        resolve([]);
-        logger.debug('mysql: selectDoubleJoinAsset empty');
-      } else {
-        // 成功
-        resolve(selectedJoinAssetData);
-        logger.debug('mysql: selectDoubleJoinAsset end');
-      }
-
-    } catch (e: unknown) {
-      logger.error(e);
-      // error
-      reject(e);
-    }
-  });
-};
-
 /* update */
-// アセット更新
+// update asset
 export const updateData = async (table: string, selColumns: string[], selData: any, setColumns: string[], setData: any[]): Promise<void> => {
   return new Promise(async (resolve, reject) => {
     try {
-      // 対象データ
+      // update arg
       const updateAssetArgs: updateargs = {
-        table: table, // テーブル
-        setcol: setColumns, // 準備完了
-        setval: setData, // 待機状態
-        selcol: selColumns, // 対象
-        selval: selData, // 対象値
+        table: table, // table
+        setcol: setColumns, // set columns
+        setval: setData, // set values
+        selcol: selColumns, // select columns
+        selval: selData, // select values
       };
-      // 更新処理
+      // update 
       const updateUserResult = await myDB.updateDB(updateAssetArgs);
-      // 結果
+      // error
       if (updateUserResult == 'error') {
-        // エラー
+        // DB error
         throw new Error('mysql: updateData error');
       } else if (updateUserResult == 'empty') {
-        // 対象なし
+        // empty
         logger.debug('mysql: updateData empty');
       }
-      // 成功
+      // success
       resolve();
       logger.debug('mysql: updateData end');
 
@@ -219,24 +172,24 @@ export const updateData = async (table: string, selColumns: string[], selData: a
 };
 
 /* insert */
-// アセット更新
+// insert asset
 export const insertData = async (table: string, columns: string[], data: any): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
-      // 対象データ
+      // insert arg
       const insertDataArgs: insertargs = {
-        table: table, // テーブル
-        columns: columns, // カラム
-        values: data, // 値
+        table: table, // table
+        columns: columns, // columns
+        values: data, // data
       };
-      // インサートID
+      // insert 
       const insertedTokenId: any = await myDB.insertDB(insertDataArgs);
-      // 結果
+      // error or empty
       if (insertedTokenId == 'error' || insertedTokenId == 'empty') {
-        // エラー
+        // throw error
         throw new Error('insertData: usertoken insert error');
       }
-      // 成功
+      // success
       resolve(insertedTokenId);
       logger.debug('mysql: insertData end');
 

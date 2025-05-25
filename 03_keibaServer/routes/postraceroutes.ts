@@ -1,68 +1,69 @@
 /**
  * postraceroutes.ts
  *
- * route：開催情報POSTルーティング用
+ * route：racinginfo POST Routing
 **/
 
 'use strict';
 
-// 名前空間
+// namespace
 import { myConst } from '../consts/globalvariables';
 
-// モジュール定義
+// modules
 import { Router } from 'express'; // express
 import Logger from '../class/Logger'; // logger
-// SQL読込
+// SQL
 import { selectAsset } from '../modules/mysqlModule';
-// ロガー設定
+// logger setting
 const logger = new Logger(myConst.APP_NAME);
 
-// レースポストルータ
+// race posing
 export const postRaceRouter = () => {
-  // ルータ
+  // router
   const router = Router();
 
-  // 開催レースID取得
+  // get race id
   router.post('/getracingno', async (req, res) => {
     try {
-      // モード
       logger.info('getracingno mode');
-      // 開催日
+      // racing date
       const reqraceDate: any = req.body.date ?? null;
       logger.trace(`getracingno: date: ${reqraceDate}`);
 
-      // データ無し
+      // no data
       if (!reqraceDate) {
         throw new Error('reqraceDate: no necessary data');
       }
-      // 開催年
+      // racing year
       const raceYear: string = String(reqraceDate).substring(0, 4);
 
-      // DB検索
+      // get from DB
       const raceNoArray: any = await Promise.all(
         myConst.DB_NAMES.map(async (table: string): Promise<string> => {
           return new Promise(async (resolve, reject) => {
+            // select from DB
             const selectedRace: any = await selectAsset(table, ['racingdate', 'usable'], [[reqraceDate], [1]], ['place_id', 'stages', 'days']);
+
+            // if not empty
             if (selectedRace.length > 0) {
-              // 競馬場ID
+              // placeID
               const placeid: string = String(selectedRace[0].place_id).padStart(2, '0');
-              // 開催回
+              // stage
               const raceStage: string = String(selectedRace[0].stages).padStart(2, '0');
-              // 開催日数
+              // days
               const raceDays: string = String(selectedRace[0].days).padStart(2, '0');
-              // 対象データ取得
+              // return raceID
               resolve(raceYear + placeid + raceStage + raceDays);
             }
           })
         }));
 
       logger.info(`racingno get completed.`);
-      logger.trace(raceNoArray);
-      // 完了
+      // success
       res.status(200).send(raceNoArray);
 
     } catch (e: unknown) {
-      // エラー
+      // error
       res.status(200).send('error');
       logger.error(e);
     }

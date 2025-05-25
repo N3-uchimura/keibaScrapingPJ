@@ -1,15 +1,15 @@
 /**
- * yomeserver.ts
+ * keibaserver.ts
  **
- * function：メイン
+ * function：main
 **/
 
 'use strict';
 
-// 名前空間
+// namespace
 import { myConst } from './consts/globalvariables';
 
-// モジュール
+// modules
 import * as path from 'path'; // path
 import express from 'express'; //express
 import { config as dotenv } from 'dotenv'; // dotenv
@@ -17,40 +17,42 @@ import helmet from 'helmet'; // helmet
 import Logger from './class/Logger'; // logger
 import { getRouter } from './routes/getroutes'; // router
 import { postRaceRouter } from './routes/postraceroutes'; // router
-// モジュール設定
-dotenv({ path: path.join(__dirname, '.env') }); // 環境変数
-const logger: Logger = new Logger(myConst.APP_NAME); // ロガー
+// dotenv
+dotenv({ path: path.join(__dirname, '.env') });
+// logger setting
+const logger: Logger = new Logger(myConst.APP_NAME);
 logger.info('configuration started');
-const PORT: number = Number(process.env.SERVER_PORT); // ポート番号
-// express設定
-const app: express.Express = express(); // express
-app.use(express.json()); // json設定
+// port no
+const PORT: number = Number(process.env.SERVER_PORT);
+// express
+const app: express.Express = express();
+app.use(express.json()); // json
 app.use(
   express.urlencoded({
-    extended: true, // body parser使用
+    extended: true, // body parser
   })
 );
-app.set('view engine', 'ejs'); // ejs使用
-// XSS対策
+// XSS
 app.use(helmet());
 logger.info('configuration completed');
 
 /// GET
 app.use('/', getRouter());
+
 /// POST
-// レース関係
+// race root
 app.use('/race/', postRaceRouter());
 
-// 404ハンドラー
+// 404 handler
 app.all(/(.*)/, (req, res) => {
   logger.info('error occured');
-  // 404エラー
+  // 404 error
   res.render('404', {
-    title: '404エラー',
+    title: '404 error',
   });
 });
 
-// エラーハンドラ
+// error handler
 app.use(
   (
     err: Error,
@@ -63,7 +65,7 @@ app.use(
   }
 );
 
-// 3000番待機
+// wait on port
 app.listen(PORT, () => {
   logger.info(`${process.env.SERVER_NAME} listening at ${process.env.DEFAULT_URL}:${PORT}`);
 });

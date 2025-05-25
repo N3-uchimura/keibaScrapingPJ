@@ -1,32 +1,32 @@
 /**
  * getroutes.ts
  *
- * route：GETルーティング用
+ * route：GET Routing
 **/
 
 'use strict';
 
-// 名前空間
+// namespace
 import { myConst } from '../consts/globalvariables';
 
-// モジュール定義
+// modules
 import { Router } from 'express';
 import Logger from '../class/Logger'; // logger
-// ロガー
+// logger
 const logger: Logger = new Logger(myConst.APP_NAME);
 
-// GETルータ
+// GET Router
 export const getRouter = () => {
-  // ルータ
+  // router
   const router = Router();
 
-  // getテスト
+  // get test
   router.get('/test', async (_, res) => {
     try {
       logger.info('test connected');
 
     } catch (e: unknown) {
-      // エラー
+      // error
       logger.error(e);
     }
   });
