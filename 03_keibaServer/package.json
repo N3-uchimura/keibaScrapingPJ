@@ -1,0 +1,24 @@
+{
+  "name": "keiba-server",
+  "version": "0.0.1",
+  "description": "Web server for keiba-app",
+  "private": true,
+  "scripts": {
+    "start": "ts-node keibaserver.ts"
+  },
+  "main": "keibaserver.ts",
+  "keywords": [],
+  "author": "N3-uchimura <uchimura@numthree.net>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.12",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "log4js": "^6.9.1",
+    "mysql2": "^3.14.1",
+    "ts-node": "^10.9.2"
+  }
+}

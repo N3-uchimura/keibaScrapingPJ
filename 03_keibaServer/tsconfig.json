@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "es2016",
+    "baseUrl": ".",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitAny": false,
+    "moduleResolution": "Node",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "*": [
+        "./@types/*"
+      ]
+    }
+  },
+  "include": [
+    "./**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".gitignore",
+    ".git",
+    "./public/js/*.js"
+  ],
+}
