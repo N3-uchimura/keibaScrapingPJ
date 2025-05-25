@@ -22,7 +22,7 @@ export const postRaceRouter = () => {
   // ルータ
   const router = Router();
 
-  // 選択中キャラID取得
+  // 開催レースID取得
   router.post('/getracingno', async (req, res) => {
     try {
       // モード
