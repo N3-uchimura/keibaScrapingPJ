@@ -32,6 +32,36 @@ export namespace mySelectors {
 
 // races
 export namespace myRaces {
+  export const RACES: any = {
+    '札幌': '01',
+    '函館': '02',
+    '福島': '03',
+    '新潟': '04',
+    '東京': '05',
+    '中山': '06',
+    '中京': '07',
+    '京都': '08',
+    '阪神': '09',
+    '小倉': '10',
+  };
+  export const RACES_EN: any = {
+    'Sapporo': '01',
+    'Hakodate': '02',
+    'Fukushima': '03',
+    'Niigata': '04',
+    'Tokyo': '05',
+    'Nakayama': '06',
+    'Chukyo': '07',
+    'Kyoto': '08',
+    'Hanshin': '09',
+    'Kokura': '10',
+  };
+  export const EAST_RACES: string[] = ['東京', '中山'];
+  export const WEST_RACES: string[] = ['京都', '阪神'];
+  export const LOCAL_RACES: string[] = ['札幌', '函館', '福島', '新潟', '中京', '小倉'];
+  export const EAST_RACES_EN: string[] = ['Tokyo', 'Nakayama'];
+  export const WEST_RACES_EN: string[] = ['Kyoto', 'Hanshin'];
+  export const LOCAL_RACES_EN: string[] = ['Sapporo', 'Hakodate', 'Fukushima', 'Niigata', 'Chukyo', 'Kokura'];
   export const TODAY_RACES: string[] = ['東京', '京都', '新潟'];
-  export const TODAY_RACENOS: string[] = ['202505020902', '202508020902', '202504010702'];
+  export const TODAY_RACENOS: string[] = ['202505021001', '202508021001', '202504010801'];
 }

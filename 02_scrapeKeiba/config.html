@@ -6,17 +6,29 @@
   <title>Data HorseData Scraper Config</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/flatpickr.min.css">
+  <script src="js/flatpickr.min.js"></script>
+  <script src="js/ja.min.js"></script>
 </head>
 
 <body>
   <h1 id="maintitle">Data HorseData Scraper Config</h1>
   <h4>
-    <div class="operation_area"> 
-      <input type="checkbox" id="language" checked><span id="languagearea">Japanese</span></div>
-  </h4>
-    <div class="operation_area">
-      <button id="top_button"class="button-g button-1 button-wide" value="top" onclick="topPage();">Goto Top</button>
+    <div class="operation_area"><span id="racingdate">開催日</span><br>
+      <input type="text" id="flatpickr">
     </div>
+  </h4>
+  <h4>
+    <div class="operation_area">
+      <input type="checkbox" id="language" checked><span id="languagearea">Japanese</span>
+    </div>
+  </h4>
+  <div class="operation_area">
+    <button id="save_button" class="button-g button-6 button-wide" value="top" onclick="save();">Save</button>
+  </div>
+  <div class="operation_area">
+    <button id="top_button" class="button-g button-1 button-wide" value="top" onclick="topPage();">Goto Top</button>
+  </div>
   </div>
   <footer>
     <p><small>&copy; 2025 Nthree LLC All Rights Reserved. </small></p>
@@ -29,34 +41,57 @@
     /// constants
     // japanese
     const APPNAME_STR_JA = '競馬スクレイピングツール設定画面';
+    const DATE_STR_JA = '開催日';
     const LANGUAGE_STR_JA = '日本語';
     const GOTOTOP_STR_JA = 'トップに戻る';
+    const SAVE_STR_JA = '保存';
+
     // english
     const APPNAME_STR_EN = 'Data HorseData Scraper Config';
+    const DATE_STR_EN = 'Racing Date';
     const LANGUAGE_STR_EN = 'Japanese';
     const GOTOTOP_STR_EN = 'Goto Top';
+    const SAVE_STR_EN = 'Save';
     // doms
+    const dateDom = document.getElementById("flatpickr");
     const maintitleDom = document.getElementById("maintitle");
+    const racingdateDom = document.getElementById("racingdate");
     const languageDom = document.getElementById("language");
     const languageareaDom = document.getElementById("languagearea");
     const gotoTopButtonDom = document.getElementById("top_button");
+    const saveButtonDom = document.getElementById("save_button");
 
     /// ipc
-    // watch checkbox
-    languageDom.addEventListener('change', e => {
-      // language detection
-      const fixLang = languageDom.checked ? 'japanese' : 'english';
-      // change language
-      changeLanguage(fixLang);
-      // send to main ipc
-      window.api.send("confready", fixLang);
-    });
-
     // be ready
     window.api.on("confready", arg => {
       // change language
       changeLanguage(arg);
+      // init calender
+      flatpickr("#flatpickr", {
+        locale: "ja"
+      });
     });
+
+    // save
+    const save = () => {
+      try {
+        console.log("save mode");
+        // language detection
+        const fixLang = languageDom.checked ? 'japanese' : 'english';
+        const sendObj = {
+          date: dateDom.value,
+          language: fixLang,
+        }
+        // change language
+        changeLanguage(fixLang);
+        // send to main ipc
+        window.api.send("save", sendObj);
+
+      } catch (e) {
+        // error
+        window.api.send("error", e);
+      }
+    }
 
     // goto top
     const topPage = () => {
@@ -74,22 +109,26 @@
     // change language
     const changeLanguage = lang => {
       // japanese
-      if(lang == 'japanese') {
+      if (lang == 'japanese') {
         japaneseFlg = true;
         languageDom.checked = true;
         document.title = APPNAME_STR_JA;
         maintitleDom.innerHTML = APPNAME_STR_JA;
+        racingdateDom.innerHTML = DATE_STR_JA;
         languageareaDom.innerHTML = LANGUAGE_STR_JA;
         gotoTopButtonDom.innerHTML = GOTOTOP_STR_JA;
+        saveButtonDom.innerHTML = SAVE_STR_JA;
         document.documentElement.setAttribute("lang", 'ja');
-      // english
+        // english
       } else {
         japaneseFlg = false;
         languageDom.checked = false;
         document.title = APPNAME_STR_EN;
         maintitleDom.innerHTML = APPNAME_STR_EN
+        racingdateDom.innerHTML = DATE_STR_EN;
         languageareaDom.innerHTML = LANGUAGE_STR_EN;
         gotoTopButtonDom.innerHTML = GOTOTOP_STR_EN;
+        saveButtonDom.innerHTML = SAVE_STR_EN;
         document.documentElement.setAttribute("lang", 'en');
       }
     }

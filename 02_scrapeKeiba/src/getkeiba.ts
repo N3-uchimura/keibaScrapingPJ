@@ -91,7 +91,7 @@ const createWindow = (): void => {
     // ready
     mainWindow.once("ready-to-show", async () => {
       // dev mode
-      // mainWindow.webContents.openDevTools();
+      mainWindow.webContents.openDevTools();
     });
 
     // minimize and stay on tray
@@ -224,18 +224,9 @@ app.on("window-all-closed", () => {
 ipcMain.on("beforeready", async (_, __) => {
   logger.info("app: beforeready app");
   // language
-  const language = await readFile(path.join(__dirname, "language.txt"), "utf8");
+  const language = await readFile(path.join(__dirname, "..", "build", "language.txt"), "utf8");
   // be ready
   mainWindow.send("ready", language);
-});
-
-// ready
-ipcMain.on("confready", async (_, arg: any) => {
-  logger.info("app: beforeready app");
-  // save
-  await writeFile(path.join(__dirname, "language.txt"), arg);
-  // be ready
-  mainWindow.send("confready", arg);
 });
 
 // config
@@ -249,11 +240,25 @@ ipcMain.on("config", async (_, arg: any) => {
   mainWindow.send("confready", language);
 });
 
+// save
+ipcMain.on("save", async (_, arg: any) => {
+  logger.info("app: save config");
+  // save
+  await writeFile(path.join(__dirname, "..", "build", "language.txt"), arg.language);
+  // date
+  const date: string = String(arg.date);
+  console.log(date);
+  // goto config page
+  await mainWindow.loadFile(path.join(__dirname, "../index.html"));
+  // language
+  mainWindow.send("topready", arg.language);
+});
+
 // index
 ipcMain.on("topapp", async (_, __) => {
   logger.info("app: top app");
   // language
-  const language = await readFile(path.join(__dirname, "language.txt"), "utf8");
+  const language = await readFile(path.join(__dirname, "..", "build", "language.txt"), "utf8");
   console.log(language);
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
