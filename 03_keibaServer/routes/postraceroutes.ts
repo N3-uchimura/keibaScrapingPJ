@@ -48,7 +48,6 @@ export const postRaceRouter = () => {
       // racing year
       const raceYear: string = tmpRacingdate.substring(0, 4);
 
-
       for (let db of myConst.DB_NAMES) {
         // select from DB
         promises.push(selectAsset(db, ['racingdate', 'usable'], [[tmpRacingdate], [1]], ['place_id', 'stages', 'days']));
