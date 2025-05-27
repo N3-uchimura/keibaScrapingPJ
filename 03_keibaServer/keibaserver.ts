@@ -44,7 +44,7 @@ app.use('/', getRouter());
 app.use('/race/', postRaceRouter());
 
 // 404 handler
-app.all(/(.*)/, (req, res) => {
+app.all(/(.*)/, (_, res) => {
   logger.info('error occured');
   // 404 error
   res.render('404', {
@@ -56,11 +56,11 @@ app.all(/(.*)/, (req, res) => {
 app.use(
   (
     err: Error,
-    req: express.Request,
+    _: express.Request,
     res: express.Response,
-    next: express.NextFunction,
+    __: express.NextFunction,
   ) => {
-    //logger.error(err);
+    logger.error(err);
     res.send('error');
   }
 );

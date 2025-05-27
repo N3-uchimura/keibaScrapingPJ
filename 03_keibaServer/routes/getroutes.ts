@@ -21,7 +21,7 @@ export const getRouter = () => {
   const router = Router();
 
   // get test
-  router.get('/test', async (_, res) => {
+  router.get('/test', async (_, __) => {
     try {
       logger.info('test connected');
 

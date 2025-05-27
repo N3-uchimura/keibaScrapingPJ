@@ -22,10 +22,14 @@ export const postRaceRouter = () => {
   // router
   const router = Router();
 
-  // get race id
+  // get race no
   router.post('/getracingno', async (req, res) => {
     try {
       logger.info('getracingno mode');
+      // promises
+      let promises: Promise<any>[] = [];
+      // promises
+      let raceNos: string[] = [];
       // racing date
       const reqraceDate: any = req.body.date ?? null;
       logger.trace(`getracingno: date: ${reqraceDate}`);
@@ -34,33 +38,43 @@ export const postRaceRouter = () => {
       if (!reqraceDate) {
         throw new Error('reqraceDate: no necessary data');
       }
+      // racing date
+      const tmpRacingdate: string = String(reqraceDate);
+
+      // if shorter then 4 char
+      if (tmpRacingdate.length < 4) {
+        throw new Error('reqraceDate: no date data');
+      }
       // racing year
-      const raceYear: string = String(reqraceDate).substring(0, 4);
+      const raceYear: string = tmpRacingdate.substring(0, 4);
 
+
+      for (let db of myConst.DB_NAMES) {
+        // select from DB
+        promises.push(selectAsset(db, ['racingdate', 'usable'], [[tmpRacingdate], [1]], ['place_id', 'stages', 'days']));
+      }
       // get from DB
-      const raceNoArray: any = await Promise.all(
-        myConst.DB_NAMES.map(async (table: string): Promise<string> => {
-          return new Promise(async (resolve, reject) => {
-            // select from DB
-            const selectedRace: any = await selectAsset(table, ['racingdate', 'usable'], [[reqraceDate], [1]], ['place_id', 'stages', 'days']);
+      const raceNoArray: any = await Promise.all(promises);
 
-            // if not empty
-            if (selectedRace.length > 0) {
-              // placeID
-              const placeid: string = String(selectedRace[0].place_id).padStart(2, '0');
-              // stage
-              const raceStage: string = String(selectedRace[0].stages).padStart(2, '0');
-              // days
-              const raceDays: string = String(selectedRace[0].days).padStart(2, '0');
-              // return raceID
-              resolve(raceYear + placeid + raceStage + raceDays);
-            }
-          })
-        }));
+      // modify them
+      for (let race of raceNoArray) {
+        // if not empty
+        if (race.length > 0) {
+          // placeID
+          const placeid: string = String(race[0].place_id).padStart(2, '0');
+          // stage
+          const raceStage: string = String(race[0].stages).padStart(2, '0');
+          // days
+          const raceDays: string = String(race[0].days).padStart(2, '0');
+          // return raceID
+          raceNos.push(raceYear + placeid + raceStage + raceDays);
+        }
+      }
 
       logger.info(`racingno get completed.`);
+      console.log(raceNos);
       // success
-      res.status(200).send(raceNoArray);
+      res.status(200).send(raceNos);
 
     } catch (e: unknown) {
       // error
