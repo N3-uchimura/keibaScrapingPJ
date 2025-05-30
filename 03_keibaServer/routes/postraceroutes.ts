@@ -13,7 +13,7 @@ import { myConst } from '../consts/globalvariables';
 import { Router } from 'express'; // express
 import Logger from '../class/Logger'; // logger
 // SQL
-import { selectAsset } from '../modules/mysqlModule';
+import { selectJoinAsset } from '../modules/mysqlModule';
 // logger setting
 const logger = new Logger(myConst.APP_NAME);
 
@@ -30,6 +30,8 @@ export const postRaceRouter = () => {
       let promises: Promise<any>[] = [];
       // promises
       let raceNos: string[] = [];
+      // places
+      let racePlaces: string[] = [];
       // racing date
       const reqraceDate: any = req.body.date ?? null;
       logger.trace(`getracingno: date: ${reqraceDate}`);
@@ -50,7 +52,7 @@ export const postRaceRouter = () => {
 
       for (let db of myConst.DB_NAMES) {
         // select from DB
-        promises.push(selectAsset(db, ['racingdate', 'usable'], [[tmpRacingdate], [1]], ['place_id', 'stages', 'days']));
+        promises.push(selectJoinAsset(db, 'place', ['racingdate', 'usable'], [[tmpRacingdate], [1]], ['usable'], [[1]], ['place_id', 'stages', 'days', 'place.placename']));
       }
       // get from DB
       const raceNoArray: any = await Promise.all(promises);
@@ -59,6 +61,8 @@ export const postRaceRouter = () => {
       for (let race of raceNoArray) {
         // if not empty
         if (race.length > 0) {
+          // places
+          racePlaces.push(race[0].placename);
           // placeID
           const placeid: string = String(race[0].place_id).padStart(2, '0');
           // stage
@@ -71,9 +75,11 @@ export const postRaceRouter = () => {
       }
 
       logger.info(`racingno get completed.`);
-      console.log(raceNos);
       // success
-      res.status(200).send(raceNos);
+      res.status(200).send({
+        place: racePlaces,
+        no: raceNos
+      });
 
     } catch (e: unknown) {
       // error

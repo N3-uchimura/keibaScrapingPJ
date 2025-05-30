@@ -9,19 +9,17 @@
 // name space
 import { myConst, mySelectors, myRaces } from './consts/globalvariables';
 
-//* changeable Variables
-// language
-let globalLanguage: string = 'japanese';
-
 //* Constants
 const WINDOW_WIDTH: number = 1000; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
 
 //* Modules
 import * as path from 'node:path'; // path
-import { readFile, writeFile } from 'node:fs/promises'; // file system
+import axios from "axios"; // http通信用
+import keytar from "keytar";
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
+
 import { Scrape } from './class/ElScrape0517'; // custom Scraper
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
@@ -91,7 +89,7 @@ const createWindow = (): void => {
     // ready
     mainWindow.once("ready-to-show", async () => {
       // dev mode
-      mainWindow.webContents.openDevTools();
+      //mainWindow.webContents.openDevTools();
     });
 
     // minimize and stay on tray
@@ -139,12 +137,7 @@ app.enableSandbox();
 // avoid double ignition
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
-  // japanese
-  if (globalLanguage == 'japanese') {
-    dialogMaker.showmessage("error", "メインプロセスが多重起動しました。終了します。");
-  } else {
-    dialogMaker.showmessage("error", "Double ignition. break.");
-  }
+  dialogMaker.showmessage("error", "Double ignition. break.");
   app.quit();
 }
 
@@ -157,8 +150,10 @@ app.on("ready", async () => {
   // menu label
   let displayLabel: string = '';
   let closeLabel: string = '';
+  // get date
+  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // japanese
-  if (globalLanguage == 'japanese') {
+  if (language == 'japanese') {
     displayLabel = '表示';
     closeLabel = '閉じる';
   } else {
@@ -203,7 +198,6 @@ app.on("activate", async () => {
     // reboot
     createWindow();
   }
-
 });
 
 // quit button
@@ -224,7 +218,7 @@ app.on("window-all-closed", () => {
 ipcMain.on("beforeready", async (_, __) => {
   logger.info("app: beforeready app");
   // language
-  const language = await readFile(path.join(__dirname, "..", "build", "language.txt"), "utf8");
+  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // be ready
   mainWindow.send("ready", language);
 });
@@ -233,7 +227,7 @@ ipcMain.on("beforeready", async (_, __) => {
 ipcMain.on("config", async (_, arg: any) => {
   logger.info("app: config app");
   // language
-  const language = arg ? 'japanese' : 'english';
+  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../config.html"));
   // language
@@ -243,23 +237,25 @@ ipcMain.on("config", async (_, arg: any) => {
 // save
 ipcMain.on("save", async (_, arg: any) => {
   logger.info("app: save config");
-  // save
-  await writeFile(path.join(__dirname, "..", "build", "language.txt"), arg.language);
   // date
   const date: string = String(arg.date);
-  console.log(date);
+  // date
+  const language: string = String(arg.language);
+  // aget date
+  await keytar.setPassword('date', 'admin', date);
+  // language
+  await keytar.setPassword('language', 'admin', language);
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
   // language
-  mainWindow.send("topready", arg.language);
+  mainWindow.send("topready", language);
 });
 
 // index
 ipcMain.on("topapp", async (_, __) => {
   logger.info("app: top app");
   // language
-  const language = await readFile(path.join(__dirname, "..", "build", "language.txt"), "utf8");
-  console.log(language);
+  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
   // language
@@ -287,10 +283,61 @@ ipcMain.on("error", async (_, arg: any) => {
 ipcMain.on("url", async (event: any, _) => {
   try {
     logger.info("ipc: geturl mode");
-    // success Counter
-    let successCounter: number = 0;
-    // fail Counter
-    let failCounter: number = 0;
+
+    // scraper
+    const scrapeUrls = async (rd: any) => {
+      return new Promise(async (resolve, _) => {
+        // success Counter
+        let successCounter: number = 0;
+        // fail Counter
+        let failCounter: number = 0;
+
+        try {
+          // empty array
+          let tmpObj: any = {
+            horse: '', // horse name
+            url: '', // url
+          };
+          // input word
+          await scraper.doType('.Txt_Form', rd);
+          // click submit button
+          await scraper.doClick('.Submit_Btn');
+          // wait for loading
+          await scraper.doWaitFor(2000);
+          // get urls
+          const tmpUrl = await scraper.getUrl() ?? '';
+          // insert horse name
+          tmpObj.horse = rd;
+          // insert url
+          tmpObj.url = tmpUrl;
+
+          // url exists
+          if (tmpUrl && tmpUrl != '') {
+            resolve(tmpObj);
+            successCounter++;
+          } else {
+            failCounter++;
+          }
+
+        } catch (e: unknown) {
+          logger.error(e);
+          failCounter++;
+
+        } finally {
+          // send success
+          event.sender.send("success", successCounter);
+          // send fail
+          event.sender.send("fail", failCounter);
+          // goto page
+          await scraper.doGo(myConst.BASE_URL);
+          // wait for loading
+          await scraper.doWaitFor(3000);
+        }
+      });
+    }
+
+    // promises
+    let promises: Promise<any>[] = [];
     // header array
     const columnArray: string[] = ['horse', 'url'];
     // file reading
@@ -311,48 +358,11 @@ ipcMain.on("url", async (event: any, _) => {
 
     // loop words
     for (const rd of records) {
-      try {
-        // empty array
-        let tmpObj: any = {
-          horse: '', // horse name
-          url: '', // url
-        };
-        // input word
-        await scraper.doType('.Txt_Form', rd);
-        // click submit button
-        await scraper.doClick('.Submit_Btn');
-        // wait for loading
-        await scraper.doWaitFor(2000);
-        // get urls
-        const tmpUrl = await scraper.getUrl() ?? '';
-        // insert horse name
-        tmpObj.horse = rd;
-        // insert url
-        tmpObj.url = tmpUrl;
-
-        // url exists
-        if (tmpUrl && tmpUrl != '') {
-          resultArray.push(tmpObj);
-          successCounter++;
-        } else {
-          failCounter++;
-        }
-
-      } catch (e: unknown) {
-        logger.error(e);
-        failCounter++;
-
-      } finally {
-        // send success
-        event.sender.send("success", successCounter);
-        // send fail
-        event.sender.send("fail", failCounter);
-        // goto page
-        await scraper.doGo(myConst.BASE_URL);
-        // wait for loading
-        await scraper.doWaitFor(3000);
-      }
+      promises.push(scrapeUrls(rd));
     }
+    // get from DB
+    const resultArray: any = await Promise.all(promises);
+
     // format date
     const formattedDate: string = 'url_' + (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
     // file path
@@ -477,13 +487,26 @@ ipcMain.on("sire", async (event: any, _) => {
 });
 
 // get horse training
-ipcMain.on("training", async (event: any, _) => {
+ipcMain.on("training", async (event: any, _: any) => {
   try {
     logger.info("ipc: gettraining mode");
     // success Counter
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // get date
+    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+    // formattedDate
+    const dateString: string = (new Date).toISOString().slice(0, 10);
+    // get date
+    const date = await keytar.getPassword('date', 'admin') ?? dateString;
+    // race data
+    const raceNoData: any = await httpsPost('https://keiba.numthree.net/race/getracingno', { date: date });
+    // empty
+    if (raceNoData.no.length == 0) {
+      // エラー返し
+      throw new Error("開催日ではありません");
+    }
     // header
     const trainingColumns: string[] = ['race', 'horse', 'date', 'place', 'condition', 'strength', 'review', 'lap1', 'lap2', 'lap3', 'lap4', 'lap5', 'color1', 'color2', 'color3', 'color4', 'color5'];
     // for race loop
@@ -515,21 +538,31 @@ ipcMain.on("training", async (event: any, _) => {
     await scraper.doWaitFor(3000);
 
     // loop each races
-    for await (const [idx, raceId] of Object.entries(myRaces.TODAY_RACENOS)) {
+    for await (const [idx, _] of Object.entries(raceNoData.no)) {
+      // course name
+      let targetCournseName: string;
       // finaljson
       let finalJsonArray: any[] = [];
       // index
       const targetIdx: number = Number(idx);
+      if (language == 'japanese') {
+        targetCournseName = raceNoData.place[targetIdx];
+      } else {
+        targetCournseName = myRaces.RACES[raceNoData.place[targetIdx]];
+      }
       // course name
-      const targetCournseName: string = myRaces.TODAY_RACES[targetIdx];
+      const targetRaceId: string = raceNoData.no[targetIdx];
       // course
-      const targetCourse: string = raceId.slice(0, -2);
+      const targetCourse: string = targetRaceId.slice(0, -2);
       // base url
       const baseUrl: string = `${myConst.TRAINING_BASE_URL}?race_id=${targetCourse}`;
       // csv filename
       const filePath: string = `${tmpFilePath}_${targetCournseName}.csv`;
       // send totalWords
-      event.sender.send("total", 12);
+      event.sender.send("total", {
+        len: 12,
+        place: targetCournseName,
+      });
 
       // loop each races
       for await (let j of racenums) {
@@ -620,18 +653,20 @@ ipcMain.on("training", async (event: any, _) => {
               } else {
                 tmpJsonArray.push(tmpObj);
               }
-              successCounter++;
+
             } catch (e) {
               logger.error(e);
-              failCounter++;
+
               break;
             }
           }
+          successCounter++;
           finalJsonArray.push(tmpJsonArray);
 
         } catch (err2: unknown) {
           // error
           logger.error(err2);
+          failCounter++;
         }
         finally {
           // send success
@@ -652,4 +687,42 @@ ipcMain.on("training", async (event: any, _) => {
     logger.error(e);
   }
 
+
 });
+
+// post送信
+const httpsPost = async (
+  hostname: string,
+  data: any,
+): Promise<any> => {
+  return new Promise(async (resolve, reject) => {
+    // post送信
+    axios
+      .post(hostname, data, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response: any) => {
+        // 対象データ
+        const targetData: any = response.data;
+
+        // 受信データ
+        if (targetData != "error") {
+          // リンクURL返し
+          resolve(targetData);
+        } else {
+          // エラー返し
+          throw new Error("データが欠損しています。");
+        }
+      })
+      .catch((err: unknown) => {
+        // エラー型
+        if (err instanceof Error) {
+          // エラー処理
+          dialogMaker.showmessage("error", err.message);
+          reject("httpsPost error");
+        }
+      });
+  });
+};
