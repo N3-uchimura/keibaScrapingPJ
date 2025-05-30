@@ -15,7 +15,7 @@ const WINDOW_HEIGHT: number = 1000; // window height
 
 //* Modules
 import * as path from 'node:path'; // path
-import axios from "axios"; // http通信用
+import axios from "axios"; // http
 import keytar from "keytar";
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
@@ -690,13 +690,13 @@ ipcMain.on("training", async (event: any, _: any) => {
 
 });
 
-// post送信
+// post communication
 const httpsPost = async (
   hostname: string,
   data: any,
 ): Promise<any> => {
   return new Promise(async (resolve, reject) => {
-    // post送信
+    // post
     axios
       .post(hostname, data, {
         headers: {
@@ -704,22 +704,21 @@ const httpsPost = async (
         },
       })
       .then((response: any) => {
-        // 対象データ
+        // data
         const targetData: any = response.data;
 
-        // 受信データ
+        // recieved data
         if (targetData != "error") {
-          // リンクURL返し
+          // result
           resolve(targetData);
         } else {
-          // エラー返し
-          throw new Error("データが欠損しています。");
+          // error
+          throw new Error("data is invalid");
         }
       })
       .catch((err: unknown) => {
-        // エラー型
         if (err instanceof Error) {
-          // エラー処理
+          // error message
           dialogMaker.showmessage("error", err.message);
           reject("httpsPost error");
         }
