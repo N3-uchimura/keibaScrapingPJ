@@ -150,9 +150,9 @@ app.on("ready", async () => {
   // menu label
   let displayLabel: string = '';
   let closeLabel: string = '';
-  // get date
+  // get language
   const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
-  // japanese
+  // switch on language
   if (language == 'japanese') {
     displayLabel = '表示';
     closeLabel = '閉じる';
@@ -543,8 +543,12 @@ ipcMain.on("training", async (event: any, _: any) => {
       let targetCournseName: string;
       // finaljson
       let finalJsonArray: any[] = [];
+      // initialize counter
+      successCounter = 0;
+      failCounter = 0;
       // index
       const targetIdx: number = Number(idx);
+      // switch language
       if (language == 'japanese') {
         targetCournseName = raceNoData.place[targetIdx];
       } else {
@@ -667,8 +671,8 @@ ipcMain.on("training", async (event: any, _: any) => {
           // error
           logger.error(err2);
           failCounter++;
-        }
-        finally {
+
+        } finally {
           // send success
           event.sender.send("success", successCounter);
           // send fail
@@ -680,13 +684,11 @@ ipcMain.on("training", async (event: any, _: any) => {
       logger.info(`csv completed.`);
       // wait 0.5 sec
       await scraper.doWaitFor(1500);
-
     }
 
   } catch (e: unknown) {
     logger.error(e);
   }
-
 
 });
 
