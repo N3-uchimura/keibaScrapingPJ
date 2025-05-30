@@ -17,6 +17,7 @@ export namespace myConst {
   export const HORSE_BASE_URL: string = "https://db.netkeiba.com/horse/";
   export const TRAINING_BASE_URL: string = "https://race.netkeiba.com/race/oikiri.html";
   export const SIRE_BASE_URL: string = "https://db.netkeiba.com/horse/sire/";
+  export const BASE_AUTH_URL: string = "https://regist.netkeiba.com/account/?pid=login";
 }
 
 // selectors

@@ -3,7 +3,7 @@
  *
  * class：ElScrape
  * function：scraping site
- * updated: 2025/05/17
+ * updated: 2025/05/31
  **/
 
 'use strict';
@@ -27,6 +27,7 @@ export class Scrape {
   static logger: any; // logger
   static browser: any; // static browser
   static page: any; // static page
+  static pages: any[]; // static page
   private _result: boolean; // scrape result
   private _height: number; // body height
 
@@ -55,6 +56,15 @@ export class Scrape {
         Scrape.browser = await puppeteer.launch(puppOptions);
         // create new page
         Scrape.page = await Scrape.browser.newPage();
+        // get all tabs
+        Scrape.pages = await Scrape.browser.pages();
+        // if over 0
+        if (Scrape.pages.length > 1) {
+          // close unneccesary one
+          await Scrape.pages[0].close();
+        }
+        // set again
+        Scrape.page = Scrape.pages[0];
         // set viewport
         Scrape.page.setViewport({
           width: 1920,

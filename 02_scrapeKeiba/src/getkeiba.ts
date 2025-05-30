@@ -20,7 +20,7 @@ import keytar from "keytar";
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
 
-import { Scrape } from './class/ElScrape0517'; // custom Scraper
+import { Scrape } from './class/ElScrape0531'; // custom Scraper
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
 import CSV from './class/ElCsv0414'; // aggregator
@@ -518,12 +518,8 @@ ipcMain.on("training", async (event: any, _: any) => {
     // initialize
     await scraper.init();
     // goto netkeiba
-    await scraper.doGo(myConst.BASE_URL);
-    logger.debug(`goto ${myConst.BASE_URL}`);
-    // wait for loading of login button
-    await scraper.doWaitFor(2000);
-    // click login
-    await scraper.doClick('.Icon_Login');
+    await scraper.doGo(myConst.BASE_AUTH_URL);
+    logger.debug(`goto ${myConst.BASE_AUTH_URL}`);
     // wait for id/pass input
     await scraper.doWaitFor(3000);
     // input id
@@ -556,10 +552,8 @@ ipcMain.on("training", async (event: any, _: any) => {
       }
       // course name
       const targetRaceId: string = raceNoData.no[targetIdx];
-      // course
-      const targetCourse: string = targetRaceId.slice(0, -2);
       // base url
-      const baseUrl: string = `${myConst.TRAINING_BASE_URL}?race_id=${targetCourse}`;
+      const baseUrl: string = `${myConst.TRAINING_BASE_URL}?race_id=${targetRaceId}`;
       // csv filename
       const filePath: string = `${tmpFilePath}_${targetCournseName}.csv`;
       // send totalWords
