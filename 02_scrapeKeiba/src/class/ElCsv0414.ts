@@ -39,7 +39,7 @@ class CSV {
   }
 
   // getCsvData
-  getCsvData = async (filenames: string): Promise<any> => {
+  getCsvData = async (filenames: string[]): Promise<any> => {
     return new Promise(async (resolve, reject) => {
       try {
         CSV.logger.info('csv: getCsvData mode');
@@ -55,7 +55,6 @@ class CSV {
             from_line: 2, // ignore first line
             skip_empty_lines: true // ignore empty cell
           });
-          console.log(tmpRecords);
           CSV.logger.info('csv: getCsvData finished');
           // resolve
           resolve({

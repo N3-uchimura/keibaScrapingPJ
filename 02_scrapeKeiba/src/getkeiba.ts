@@ -299,10 +299,12 @@ ipcMain.on("url", async (event: any, _) => {
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // finish message
+    let endmessage: string;
     // header array
     const columnArray: string[] = ['horse', 'url'];
     // file reading
-    const filename: string = await csvMaker.showCSVDialog(mainWindow);
+    const filename: any = await csvMaker.showCSVDialog(mainWindow);
     // get data
     const tmpRecords: any = await csvMaker.getCsvData(filename);
     // horse names
@@ -368,14 +370,23 @@ ipcMain.on("url", async (event: any, _) => {
     // format date
     const formattedDate: string = 'url_' + (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
     // file path
-    const filePath: string = path.join(__dirname, 'csv', formattedDate + '.csv');
+    const filePath: string = path.join(__dirname, '../csv', formattedDate + '.csv');
     // make csv data
     await csvMaker.makeCsvData(resultArray, columnArray, filePath);
+    
+    // language
+    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+    // switch on language
+    if (language == 'japanese') {
+      // set finish message
+      endmessage = '完了しました。';
+    } else {
+      // set finish message
+      endmessage = 'completed';
+    }
     // end message
-    dialogMaker.showmessage('info', 'completed.');
+    dialogMaker.showmessage('info', endmessage);
     logger.info('completed.');
-    // close scraper
-    await scraper.doClose();
 
   } catch (e: unknown) {
     logger.error(e);
@@ -383,11 +394,9 @@ ipcMain.on("url", async (event: any, _) => {
 });
 
 // get horse sire
-ipcMain.on("sire", async (event: any, _) => {
+ipcMain.on("presire", async (event: any, _) => {
   try {
-    logger.info("ipc: getsire mode");
-    // file list
-    let fileList: string[] = [];
+    logger.info("ipc: presire mode");
     // dir path
     const dirPath: string = path.join(__dirname, '../csv');
     // files
@@ -397,8 +406,25 @@ ipcMain.on("sire", async (event: any, _) => {
     // send totalWords
     event.sender.send("file", csvFiles);
 
+  } catch (e: unknown) {
+    logger.error(e);
+  }
+});
+
+// get horse sire
+ipcMain.on("sire", async (event: any, arg: any) => {
+  try {
+    logger.info("ipc: getsire mode");
+    // success Counter
+    let successCounter: number = 0;
+    // fail Counter
+    let failCounter: number = 0;
+    // finish message
+    let endmessage: string;
+    // csv path
+    const csvFilePath: string = path.join(__dirname, '../csv', String(arg));
     // read csv file
-    const tmpRecords: any = await csvMaker.getCsvData('');
+    const tmpRecords: any = await csvMaker.getCsvData([csvFilePath]);
     // extract second column
     const urls: string[] = tmpRecords.record.map((item: any) => item[1]);
     // extract first column
@@ -409,10 +435,6 @@ ipcMain.on("sire", async (event: any, _) => {
     // loop words
     for (let i: number = 0; i < urls.length; i++) {
       try {
-        // success Counter
-        let successCounter: number = 0;
-        // fail Counter
-        let failCounter: number = 0;
         // empty array
         let tmpObj: any = {
           horse: '', // horse name
@@ -427,13 +449,13 @@ ipcMain.on("sire", async (event: any, _) => {
         tmpObj.horse = horses[i];
 
         // goto page
-        await scraper.doGo(myConst.SIRE_BASE_URL + urls[i]);
+        await scraper.doGo(myConst.SIRE_BASE_URL + urls[i].replace(myConst.HORSE_BASE_URL, ''));
         // wait for selector
         await scraper.doWaitFor(3000);
-        logger.info(`goto ${myConst.SIRE_BASE_URL + urls[i]}`);
+        logger.info(`goto ${myConst.SIRE_BASE_URL + urls[i].replace(myConst.HORSE_BASE_URL, '')}`);
         // send totalWords
-        event.sender.send("total", selectorArray.length);
-
+        event.sender.send("total", {len: urls.length, place: horses[i]});
+        
         // get data
         for (let j: number = 0; j < selectorArray.length; j++) {
           try {
@@ -447,54 +469,59 @@ ipcMain.on("sire", async (event: any, _) => {
               // data exists
               if (scrapedData != '') {
                 tmpObj[myRaces.HORSEDATA_COLUMNS[j]] = scrapedData;
-                // increment success
-                successCounter++;
-              } else {
-                // increment fail
-                failCounter++;
               }
               // wait for 100ms
               await scraper.doWaitFor(200);
 
             } else {
               logger.debug('no selector');
-              // increment fail
-              failCounter++;
+              
             }
 
           } catch (e: unknown) {
             logger.error(e);
-            // increment fail
-            failCounter++;
 
-          } finally {
-            // send success
-            event.sender.send("success", successCounter);
-            // send fail
-            event.sender.send("fail", failCounter);
           }
         }
+        
         // add to result array
         resultArray.push(tmpObj);
-
+        // increment success
+        successCounter++;
+        
       } catch (e: unknown) {
         logger.error(e);
+        // increment fail
+        failCounter++;
+
+      } finally {
+        // send success
+        event.sender.send("success", successCounter);
+        // send fail
+        event.sender.send("fail", failCounter);
       }
     }
-
     // csv header
     const csvColumnArray: string[] = ['horse', 'turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse',];
     // today date
-    const formattedDate: string = 'sire_' + (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 8);
+    const formattedDate: string = 'sire_' + (new Date).toISOString().replace(/[^\d]/g, "");
     // file path
     const filePath: string = path.join(dir_desktop, formattedDate + '.csv');
     // make csv
-    await csvMaker.makeCsvData(resultArray, csvColumnArray, filePath)
+    await csvMaker.makeCsvData(resultArray, csvColumnArray, filePath);
+    // language
+    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+    // switch on language
+    if (language == 'japanese') {
+      // set finish message
+      endmessage = '完了しました。';
+    } else {
+      // set finish message
+      endmessage = 'completed';
+    }
     // end message
-    dialogMaker.showmessage('info', 'completed.');
+    dialogMaker.showmessage('info', endmessage);
     logger.info('completed.');
-    // close scraper
-    await scraper.doClose();
 
   } catch (e: unknown) {
     logger.error(e);
@@ -509,12 +536,14 @@ ipcMain.on("training", async (event: any, _: any) => {
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // finish message
+    let endmessage: string;
     // get date
-    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+    const language: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
     // formattedDate
     const dateString: string = (new Date).toISOString().slice(0, 10);
     // get date
-    const date = await keytar.getPassword('date', 'admin') ?? dateString;
+    const date: string = await keytar.getPassword('date', 'admin') ?? dateString;
     // race data
     const raceNoData: any = await httpsPost('https://keiba.numthree.net/race/getracingno', { date: date });
     // empty
@@ -570,8 +599,10 @@ ipcMain.on("training", async (event: any, _: any) => {
       failCounter = 0;
       // index
       const targetIdx: number = Number(idx);
+      // get date
+      const localLanguage: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
       // switch language
-      if (language == 'japanese') {
+      if (localLanguage == 'japanese') {
         // set japanese racing cource
         targetCourseName = raceNoData.place[targetIdx];
       } else {
@@ -587,8 +618,7 @@ ipcMain.on("training", async (event: any, _: any) => {
       // send totalWords
       event.sender.send("total", {
         len: 12, // the number of race
-        date: date, // racing date
-        place: targetCourseName, // racing course
+        place: date + targetCourseName, // racing course
       });
 
       // loop each races
@@ -708,13 +738,24 @@ ipcMain.on("training", async (event: any, _: any) => {
       // write data
       await csvMaker.makeCsvData(finalJsonArray.flat(), trainingColumns, filePath);
       logger.info(`csv completed.`);
+      // get language
+      const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+      // switch on language
+      if (language == 'japanese') {
+        // set finish message
+        endmessage = '完了しました。';
+      } else {
+        // set finish message
+        endmessage = 'completed';
+      }
+      // end message
+      dialogMaker.showmessage('info', endmessage);
       await scraper.doWaitFor(1500);
     }
 
   } catch (e: unknown) {
     logger.error(e);
   }
-
 });
 
 // post communication

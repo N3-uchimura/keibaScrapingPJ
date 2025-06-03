@@ -44,8 +44,8 @@
       <select id="fileSelect" name="csvs">
           <option value="0">-- select file --</option>
       </select>
-      <button id="okButton" value="OK">Ok</button>
-      <button id="ngButton" value="NG">Ng</button>
+      <button id="okButton" value="OK">OK</button>
+      <button id="ngButton" value="NG">NG</button>
     </div>
   </dialog>
     <footer>
@@ -54,6 +54,7 @@
 
     <script charset="UTF-8">
       /// variables
+      let globalfileList = []; // filelist
       let japaneseFlg = true; // japanese flg
       /// constants
       // japanese
@@ -87,9 +88,9 @@
       const successtotalDom = document.getElementById('successtotal');
       const failtotalDom = document.getElementById('failtotal');
       const selectBoxDom = document.getElementById("fileSelect");
-      const modalDialog = document.getElementById('modalDialog');
-      const okButton = document.getElementById('okButton');
-      const ngButton = document.getElementById('ngButton');
+      const modalDialogDom = document.getElementById('modalDialog');
+      const okButtonDom = document.getElementById('okButton');
+      const ngButtonDom = document.getElementById('ngButton');
 
       /// ipc
       // before ready
@@ -109,10 +110,10 @@
 
       // total
       window.api.on('total', arg => {
-        // data exists
-        if (arg.date && arg.place) {
+        // place exists
+        if (arg.place) {
           // place
-          racePlaceDom.innerHTML = arg.date + arg.place;
+          racePlaceDom.innerHTML = arg.place;
         }
         // successtotal
         successtotalDom.innerHTML = arg.len;
@@ -122,6 +123,8 @@
 
       // file
       window.api.on("file", arg => {
+        // set globally
+        globalfileList = arg;
         // make modal
         arg.forEach((file, index) => {
            // option elem
@@ -132,31 +135,31 @@
           option.text = file;
           // appned options
           selectBoxDom.appendChild(option);
-        })
+        });
         // show modal
-        modalDialog.showModal();
+        modalDialogDom.showModal();
         // avoid scrolling
         document.documentElement.style.overflow = "hidden";
       });
 
       // ok modal
-      okButton.addEventListener('click', (e) => {
+      okButtonDom.addEventListener('click', (e) => {
         e.preventDefault();
         // close modal
-        modalDialog.close();
+        modalDialogDom.close();
         // clear style
         document.documentElement.removeAttribute("style");
         // get selected index
         const selected = selectBoxDom.selectedIndex;
         // send index
-        window.api.send("exitapp", selected);
+        window.api.send("sire", globalfileList[selected-1]);
       });
 
       // close modal
-      ngButton.addEventListener('click', (e) => {
+      ngButtonDom.addEventListener('click', (e) => {
         e.preventDefault();
         // close modal
-        modalDialog.close();
+        modalDialogDom.close();
         // clear style
         document.documentElement.removeAttribute("style");
       });
@@ -188,7 +191,7 @@
       const getCropResults = () => {
         try {
           // send crops result
-          window.api.send("sire");
+          window.api.send("presire");
 
         } catch (e) {
           // error
