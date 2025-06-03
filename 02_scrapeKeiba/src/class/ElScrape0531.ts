@@ -8,7 +8,9 @@
 
 'use strict';
 
+// consts
 const DISABLE_EXTENSIONS: string = '--disable-extensions'; // disable extension
+const DEF_USER_AGENT: string = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
 
 // define modules
 import { setTimeout } from 'node:timers/promises'; // wait for seconds
@@ -56,22 +58,13 @@ export class Scrape {
         Scrape.browser = await puppeteer.launch(puppOptions);
         // create new page
         Scrape.page = await Scrape.browser.newPage();
-        // get all tabs
-        Scrape.pages = await Scrape.browser.pages();
-        // if over 0
-        if (Scrape.pages.length > 1) {
-          // close unneccesary one
-          await Scrape.pages[0].close();
-        }
-        // set again
-        Scrape.page = Scrape.pages[0];
         // set viewport
         Scrape.page.setViewport({
           width: 1920,
           height: 1000,
         });
         // mimic agent
-        //await Scrape.page.setUserAgent(DEF_USER_AGENT);
+        await Scrape.page.setUserAgent(DEF_USER_AGENT);
         Scrape.logger.debug('scrape: initialize finished.');
         // resolved
         resolve();

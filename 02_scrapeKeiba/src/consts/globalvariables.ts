@@ -33,6 +33,7 @@ export namespace mySelectors {
 
 // races
 export namespace myRaces {
+  export const HORSEDATA_COLUMNS: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
   export const RACES: any = {
     '札幌': 'Sapporo',
     '函館': 'Hakodate',

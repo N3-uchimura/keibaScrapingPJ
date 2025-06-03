@@ -38,6 +38,16 @@
         <button id="exit_button" class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
       </div>
     </div>
+    <dialog id="modalDialog" class="dialog">
+    <div id="dialog-container">
+      <div>Select CSV File</div>
+      <select id="fileSelect" name="csvs">
+          <option value="0">-- select file --</option>
+      </select>
+      <button id="okButton" value="OK">Ok</button>
+      <button id="ngButton" value="NG">Ng</button>
+    </div>
+  </dialog>
     <footer>
       <p><small>&copy; 2025 Nthree LLC All Rights Reserved. </small></p>
     </footer>
@@ -45,7 +55,6 @@
     <script charset="UTF-8">
       /// variables
       let japaneseFlg = true; // japanese flg
-
       /// constants
       // japanese
       const APPNAME_STR_JA = '競馬スクレイピングツール';
@@ -77,13 +86,17 @@
       const racePlaceDom = document.getElementById('place');
       const successtotalDom = document.getElementById('successtotal');
       const failtotalDom = document.getElementById('failtotal');
+      const selectBoxDom = document.getElementById("fileSelect");
+      const modalDialog = document.getElementById('modalDialog');
+      const okButton = document.getElementById('okButton');
+      const ngButton = document.getElementById('ngButton');
 
       /// ipc
+      // before ready
       window.api.send("beforeready");
 
       // be ready
       window.api.on("ready", arg => {
-        console.log("initialize mode");
         // change language
         changeLanguage(arg);
       });
@@ -96,12 +109,56 @@
 
       // total
       window.api.on('total', arg => {
-        // place
-        racePlaceDom.innerHTML = arg.place;
+        // data exists
+        if (arg.date && arg.place) {
+          // place
+          racePlaceDom.innerHTML = arg.date + arg.place;
+        }
         // successtotal
         successtotalDom.innerHTML = arg.len;
         // failtotal
         failtotalDom.innerHTML = arg.len;
+      });
+
+      // file
+      window.api.on("file", arg => {
+        // make modal
+        arg.forEach((file, index) => {
+           // option elem
+          const option = document.createElement("option");
+          // set value
+          option.value = index + 1;
+          // set text
+          option.text = file;
+          // appned options
+          selectBoxDom.appendChild(option);
+        })
+        // show modal
+        modalDialog.showModal();
+        // avoid scrolling
+        document.documentElement.style.overflow = "hidden";
+      });
+
+      // ok modal
+      okButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        // close modal
+        modalDialog.close();
+        // clear style
+        document.documentElement.removeAttribute("style");
+        // get selected index
+        const selected = selectBoxDom.selectedIndex;
+        // send index
+        window.api.send("exitapp", selected);
+      });
+
+      // close modal
+      ngButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        // close modal
+        modalDialog.close();
+        // clear style
+        document.documentElement.removeAttribute("style");
       });
 
       // success
@@ -119,7 +176,7 @@
       // URL
       const getHorseUrls = () => {
         try {
-          console.log("getHorseUrls mode");
+          // send url
           window.api.send("url");
 
         } catch (e) {
@@ -130,7 +187,7 @@
       // crops data
       const getCropResults = () => {
         try {
-          console.log("getCropResults mode");
+          // send crops result
           window.api.send("sire");
 
         } catch (e) {
@@ -141,7 +198,7 @@
       // training
       const getTrainings = () => {
         try {
-          console.log("getTrainingsd mode");
+          // send training result
           window.api.send("training");
 
         } catch (e) {
@@ -152,7 +209,7 @@
       // config
       const configPage = () => {
         try {
-          console.log("configPage mode");
+          // config 
           window.api.send("config", japaneseFlg);
 
         } catch (e) {
@@ -163,7 +220,7 @@
       // exit
       const exitPage = () => {
         try {
-          console.log("exitPage mode");
+          // exit app
           window.api.send("exitapp");
 
         } catch (e) {

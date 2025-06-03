@@ -15,15 +15,17 @@ const WINDOW_HEIGHT: number = 1000; // window height
 
 //* Modules
 import * as path from 'node:path'; // path
+import { readdir } from 'node:fs/promises'; // filesystem
+import * as mime from 'mime-types'; // mime
 import axios from "axios"; // http
-import keytar from "keytar";
+import keytar from "keytar"; // save key
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
-
 import { Scrape } from './class/ElScrape0531'; // custom Scraper
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
 import CSV from './class/ElCsv0414'; // aggregator
+import MKDir from './class/ElMkdir0414'; // mdkir
 dotenv({ path: path.join(__dirname, '../.env') }); // env
 // desktop path
 const dir_home =
@@ -39,6 +41,8 @@ const netKeibaPass: string = process.env.NETKEIBA_PASS ?? '';
 const logger: ELLogger = new ELLogger(myConst.APP_NAME, LOG_LEVEL);
 // scraper
 const scraper = new Scrape(logger);
+// mkdir
+const mkdirManager = new MKDir(logger);
 // aggregator
 const csvMaker = new CSV(myConst.CSV_ENCODING, logger);
 // dialog
@@ -57,8 +61,6 @@ let resultArray: any[] = [];
 
 // selector array
 const selectorArray: string[] = [mySelectors.TURF_SELECTOR, mySelectors.TURF_WIN_SELECTOR, mySelectors.DIRT_SELECTOR, mySelectors.DIRT_WIN_SELECTOR, mySelectors.TURF_DIST_SELECTOR, mySelectors.DIRT_DIST_SELECTOR];
-// horse array
-const horseDataArray: string[] = ['turf', 'turfwin', 'dirt', 'dirtwin', 'turfdistanse', 'dirtdistanse'];
 
 //* General variables
 // main window
@@ -137,7 +139,9 @@ app.enableSandbox();
 // avoid double ignition
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
+  // show error message
   dialogMaker.showmessage("error", "Double ignition. break.");
+  // close app
   app.quit();
 }
 
@@ -149,15 +153,20 @@ app.on("ready", async () => {
 
   // menu label
   let displayLabel: string = '';
+  // close label
   let closeLabel: string = '';
   // get language
   const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // switch on language
   if (language == 'japanese') {
+    // set menu label
     displayLabel = '表示';
+    // set close label
     closeLabel = '閉じる';
   } else {
+    // set menu label
     displayLabel = 'show';
+    // set close label
     closeLabel = 'close';
   }
   // app icon
@@ -267,6 +276,7 @@ ipcMain.on("exitapp", async (_, __) => {
   logger.info("app: exit app");
   // excrpt for apple
   if (process.platform !== "darwin") {
+    // exit app
     app.quit();
     return false;
   }
@@ -283,61 +293,12 @@ ipcMain.on("error", async (_, arg: any) => {
 ipcMain.on("url", async (event: any, _) => {
   try {
     logger.info("ipc: geturl mode");
-
-    // scraper
-    const scrapeUrls = async (rd: any) => {
-      return new Promise(async (resolve, _) => {
-        // success Counter
-        let successCounter: number = 0;
-        // fail Counter
-        let failCounter: number = 0;
-
-        try {
-          // empty array
-          let tmpObj: any = {
-            horse: '', // horse name
-            url: '', // url
-          };
-          // input word
-          await scraper.doType('.Txt_Form', rd);
-          // click submit button
-          await scraper.doClick('.Submit_Btn');
-          // wait for loading
-          await scraper.doWaitFor(2000);
-          // get urls
-          const tmpUrl = await scraper.getUrl() ?? '';
-          // insert horse name
-          tmpObj.horse = rd;
-          // insert url
-          tmpObj.url = tmpUrl;
-
-          // url exists
-          if (tmpUrl && tmpUrl != '') {
-            resolve(tmpObj);
-            successCounter++;
-          } else {
-            failCounter++;
-          }
-
-        } catch (e: unknown) {
-          logger.error(e);
-          failCounter++;
-
-        } finally {
-          // send success
-          event.sender.send("success", successCounter);
-          // send fail
-          event.sender.send("fail", failCounter);
-          // goto page
-          await scraper.doGo(myConst.BASE_URL);
-          // wait for loading
-          await scraper.doWaitFor(3000);
-        }
-      });
-    }
-
-    // promises
-    let promises: Promise<any>[] = [];
+    // make dir
+    mkdirManager.mkDir('csv');
+     // success Counter
+    let successCounter: number = 0;
+    // fail Counter
+    let failCounter: number = 0;
     // header array
     const columnArray: string[] = ['horse', 'url'];
     // file reading
@@ -354,19 +315,60 @@ ipcMain.on("url", async (event: any, _) => {
     // wait for loading
     await scraper.doWaitFor(3000);
     // send totalWords
-    event.sender.send("total", records.length);
+    event.sender.send("total", {len: records.length});
 
     // loop words
     for (const rd of records) {
-      promises.push(scrapeUrls(rd));
-    }
-    // get from DB
-    const resultArray: any = await Promise.all(promises);
+     try {
+        // empty array
+        let tmpObj: any = {
+          horse: '', // horse name
+          url: '', // url
+        };
+        // input word
+        await scraper.doType('.Txt_Form', rd);
+        // click submit button
+        await scraper.doClick('.Submit_Btn');
+        // wait for loading
+        await scraper.doWaitFor(2000);
+        // get urls
+        const tmpUrl = await scraper.getUrl() ?? '';
+        // insert horse name
+        tmpObj.horse = rd;
+        // insert url
+        tmpObj.url = tmpUrl;
 
+        // url exists
+        if (tmpUrl && tmpUrl != '') {
+          // inset into array
+          resultArray.push(tmpObj);
+          // increment success
+          successCounter++;
+        } else {
+          // increment fail
+          failCounter++;
+        }
+
+      } catch (e: unknown) {
+        logger.error(e);
+        // increment fail
+        failCounter++;
+
+      } finally {
+        // send success
+        event.sender.send("success", successCounter);
+        // send fail
+        event.sender.send("fail", failCounter);
+        // goto page
+        await scraper.doGo(myConst.BASE_URL);
+        // wait for loading
+        await scraper.doWaitFor(3000);
+      }
+    }
     // format date
     const formattedDate: string = 'url_' + (new Date).toISOString().replace(/[^\d]/g, "").slice(0, 14);
     // file path
-    const filePath: string = path.join(dir_desktop, formattedDate + '.csv');
+    const filePath: string = path.join(__dirname, 'csv', formattedDate + '.csv');
     // make csv data
     await csvMaker.makeCsvData(resultArray, columnArray, filePath);
     // end message
@@ -384,12 +386,22 @@ ipcMain.on("url", async (event: any, _) => {
 ipcMain.on("sire", async (event: any, _) => {
   try {
     logger.info("ipc: getsire mode");
-    // chosen filename
-    const filename: string = await csvMaker.showCSVDialog(mainWindow);
+    // file list
+    let fileList: string[] = [];
+    // dir path
+    const dirPath: string = path.join(__dirname, '../csv');
+    // files
+    const files: any = await readdir(dirPath);
+    // extract csv
+    const csvFiles: any = files.filter((file: any) =>  mime.lookup(path.extname(file)) == 'text/csv')
+    // send totalWords
+    event.sender.send("file", csvFiles);
+
     // read csv file
-    const tmpRecords: any = await csvMaker.getCsvData(filename);
-    // extract first column
+    const tmpRecords: any = await csvMaker.getCsvData('');
+    // extract second column
     const urls: string[] = tmpRecords.record.map((item: any) => item[1]);
+    // extract first column
     const horses: string[] = tmpRecords.record.map((item: any) => item[0]);
     // initialize
     await scraper.init();
@@ -434,11 +446,11 @@ ipcMain.on("sire", async (event: any, _) => {
 
               // data exists
               if (scrapedData != '') {
-                tmpObj[horseDataArray[j]] = scrapedData;
+                tmpObj[myRaces.HORSEDATA_COLUMNS[j]] = scrapedData;
                 // increment success
                 successCounter++;
               } else {
-                // increment success
+                // increment fail
                 failCounter++;
               }
               // wait for 100ms
@@ -446,11 +458,13 @@ ipcMain.on("sire", async (event: any, _) => {
 
             } else {
               logger.debug('no selector');
+              // increment fail
               failCounter++;
             }
 
           } catch (e: unknown) {
             logger.error(e);
+            // increment fail
             failCounter++;
 
           } finally {
@@ -460,6 +474,7 @@ ipcMain.on("sire", async (event: any, _) => {
             event.sender.send("fail", failCounter);
           }
         }
+        // add to result array
         resultArray.push(tmpObj);
 
       } catch (e: unknown) {
@@ -504,8 +519,18 @@ ipcMain.on("training", async (event: any, _: any) => {
     const raceNoData: any = await httpsPost('https://keiba.numthree.net/race/getracingno', { date: date });
     // empty
     if (raceNoData.no.length == 0) {
-      // エラー返し
-      throw new Error("開催日ではありません");
+      // error message
+      let racingErrorMsg: string;
+      // switch language
+      if (language == 'japanese') {
+        // english error
+        racingErrorMsg = "not the racing date";
+      } else {
+        // japanese error
+        racingErrorMsg = "開催日ではありません";
+      }
+      // error
+      throw new Error(racingErrorMsg);
     }
     // header
     const trainingColumns: string[] = ['race', 'horse', 'date', 'place', 'condition', 'strength', 'review', 'lap1', 'lap2', 'lap3', 'lap4', 'lap5', 'color1', 'color2', 'color3', 'color4', 'color5'];
@@ -536,30 +561,34 @@ ipcMain.on("training", async (event: any, _: any) => {
     // loop each races
     for await (const [idx, _] of Object.entries(raceNoData.no)) {
       // course name
-      let targetCournseName: string;
+      let targetCourseName: string;
       // finaljson
       let finalJsonArray: any[] = [];
-      // initialize counter
+      // initialize success counter
       successCounter = 0;
+      // initialize fail counter
       failCounter = 0;
       // index
       const targetIdx: number = Number(idx);
       // switch language
       if (language == 'japanese') {
-        targetCournseName = raceNoData.place[targetIdx];
+        // set japanese racing cource
+        targetCourseName = raceNoData.place[targetIdx];
       } else {
-        targetCournseName = myRaces.RACES[raceNoData.place[targetIdx]];
+        // set english racing cource
+        targetCourseName = myRaces.RACES[raceNoData.place[targetIdx]];
       }
       // course name
       const targetRaceId: string = raceNoData.no[targetIdx];
       // base url
       const baseUrl: string = `${myConst.TRAINING_BASE_URL}?race_id=${targetRaceId}`;
       // csv filename
-      const filePath: string = `${tmpFilePath}_${targetCournseName}.csv`;
+      const filePath: string = `${tmpFilePath}_${targetCourseName}.csv`;
       // send totalWords
       event.sender.send("total", {
-        len: 12,
-        place: targetCournseName,
+        len: 12, // the number of race
+        date: date, // racing date
+        place: targetCourseName, // racing course
       });
 
       // loop each races
@@ -649,21 +678,24 @@ ipcMain.on("training", async (event: any, _: any) => {
                 tmpJsonArray.push(tmpObj);
 
               } else {
+                // set empty to json
                 tmpJsonArray.push(tmpObj);
               }
 
             } catch (e) {
               logger.error(e);
-
               break;
             }
           }
+          // increment success counter
           successCounter++;
+          // add resut jsons
           finalJsonArray.push(tmpJsonArray);
 
         } catch (err2: unknown) {
           // error
           logger.error(err2);
+          // increment fail counter
           failCounter++;
 
         } finally {
@@ -676,7 +708,6 @@ ipcMain.on("training", async (event: any, _: any) => {
       // write data
       await csvMaker.makeCsvData(finalJsonArray.flat(), trainingColumns, filePath);
       logger.info(`csv completed.`);
-      // wait 0.5 sec
       await scraper.doWaitFor(1500);
     }
 
@@ -705,7 +736,7 @@ const httpsPost = async (
 
         // recieved data
         if (targetData != "error") {
-          // result
+          // complete
           resolve(targetData);
         } else {
           // error
@@ -716,6 +747,7 @@ const httpsPost = async (
         if (err instanceof Error) {
           // error message
           dialogMaker.showmessage("error", err.message);
+          // reject
           reject("httpsPost error");
         }
       });
