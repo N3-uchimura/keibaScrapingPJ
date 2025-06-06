@@ -15,8 +15,9 @@ const WINDOW_HEIGHT: number = 1000; // window height
 
 //* Modules
 import * as path from 'node:path'; // path
-import { readdir } from 'node:fs/promises'; // filesystem
+import { readdir, stat } from 'node:fs/promises'; // filesystem
 import * as mime from 'mime-types'; // mime
+import dayjs from 'dayjs'; // dayjs
 import axios from "axios"; // http
 import keytar from "keytar"; // save key
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
@@ -91,7 +92,7 @@ const createWindow = (): void => {
     // ready
     mainWindow.once("ready-to-show", async () => {
       // dev mode
-      //mainWindow.webContents.openDevTools();
+      // mainWindow.webContents.openDevTools();
     });
 
     // minimize and stay on tray
@@ -247,24 +248,9 @@ ipcMain.on("config", async (_, arg: any) => {
 ipcMain.on("save", async (_, arg: any) => {
   logger.info("app: save config");
   // date
-  const date: string = String(arg.date);
-  // date
-  const language: string = String(arg.language);
-  // aget date
-  await keytar.setPassword('date', 'admin', date);
+  const language: string = String(arg);
   // language
   await keytar.setPassword('language', 'admin', language);
-  // goto config page
-  await mainWindow.loadFile(path.join(__dirname, "../index.html"));
-  // language
-  mainWindow.send("topready", language);
-});
-
-// index
-ipcMain.on("topapp", async (_, __) => {
-  logger.info("app: top app");
-  // language
-  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
   // language
@@ -397,14 +383,31 @@ ipcMain.on("url", async (event: any, _) => {
 ipcMain.on("presire", async (event: any, _) => {
   try {
     logger.info("ipc: presire mode");
+    // date
+    let fixedDates: any[] = [];
+    // promises
+    let promises: Promise<any>[] = [];
     // dir path
     const dirPath: string = path.join(__dirname, '../csv');
     // files
     const files: any = await readdir(dirPath);
     // extract csv
-    const csvFiles: any = files.filter((file: any) =>  mime.lookup(path.extname(file)) == 'text/csv')
+    const csvFiles: any = files.filter((file: any) =>  mime.lookup(path.extname(file)) == 'text/csv');
+    // make promises
+    for (let csv of csvFiles) { 
+      promises.push(stat(path.join(dirPath, csv)));
+    }
+    // get from DB
+    const csvStatsArray: any = await Promise.all(promises);
+    // set date
+    for (let stat of csvStatsArray) { 
+      fixedDates.push(dayjs(stat.mtime).format("YYYY-MM-DD HH:mm:ss"));
+    }
     // send totalWords
-    event.sender.send("file", csvFiles);
+    event.sender.send("file", {
+      file: csvFiles,
+      date: fixedDates,
+    });
 
   } catch (e: unknown) {
     logger.error(e);
@@ -529,17 +532,18 @@ ipcMain.on("sire", async (event: any, arg: any) => {
 });
 
 // get horse training
-ipcMain.on("training", async (event: any, _: any) => {
+ipcMain.on("training", async (event: any, arg: any) => {
   try {
     logger.info("ipc: gettraining mode");
     // success Counter
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // aget date
+    await keytar.setPassword('date', 'admin', arg);
     // finish message
     let endmessage: string;
-    // get date
-    const language: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
+    
     // formattedDate
     const dateString: string = (new Date).toISOString().slice(0, 10);
     // get date
@@ -550,13 +554,15 @@ ipcMain.on("training", async (event: any, _: any) => {
     if (raceNoData.no.length == 0) {
       // error message
       let racingErrorMsg: string;
+      // get date
+      const language: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
       // switch language
       if (language == 'japanese') {
-        // english error
-        racingErrorMsg = "not the racing date";
-      } else {
         // japanese error
         racingErrorMsg = "開催日ではありません";
+      } else {
+        // english error
+        racingErrorMsg = "not the racing date";
       }
       // error
       throw new Error(racingErrorMsg);

@@ -6,6 +6,9 @@
   <title>Data HorseData Scraper</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/flatpickr.min.css">
+  <script src="js/flatpickr.min.js"></script>
+  <script src="js/ja.min.js"></script>
 </head>
 
 <body>
@@ -21,33 +24,34 @@
       </div>
       <div class="operation_area">
         <h3 id="gettraining">Get Trainings</h3>
+        <span id="racingdate">Racing Date</span><br>
+        <input type="text" id="flatpickr"><br><br>
         <button id="gettraining_button" class="button-g button-wide" value="trainings" onclick="getTrainings();">Get
           Trainings</button>
       </div>
       <div class="operation_area">
-        <h3 id="config">Config</h3>
         <button id="config_button" class="button-g button-6 button-wide" value="config"
           onclick="configPage();">Config</button>
       </div>
       <div class="progressarea">
-        <div>scraping:<span id="place"></span>...</div>
-        <div>success:<span id="success"></span>/<span id="successtotal"></span></div>
-        <div>fail:<span id="fail"></span>/<span id="failtotal"></span></div>
+        <div><span id="place"></span></div>
+        <div id="successhead">success:<span id="success"></span>/<span id="successtotal"></span></div>
+        <div id="failhead">fail:<span id="fail"></span>/<span id="failtotal"></span></div>
       </div>
       <div class="operation_area">
         <button id="exit_button" class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
       </div>
     </div>
     <dialog id="modalDialog" class="dialog">
-    <div id="dialog-container">
-      <div>Select CSV File</div>
-      <select id="fileSelect" name="csvs">
+      <div id="dialog-container">
+        <div id="dialog-title">Select CSV File</div>
+        <select id="fileSelect" name="csvs">
           <option value="0">-- select file --</option>
-      </select>
-      <button id="okButton" value="OK">OK</button>
-      <button id="ngButton" value="NG">NG</button>
-    </div>
-  </dialog>
+        </select>
+        <button id="okButton" value="OK">OK</button>
+        <button id="ngButton" value="NG">CAN</button>
+      </div>
+    </dialog>
     <footer>
       <p><small>&copy; 2025 Nthree LLC All Rights Reserved. </small></p>
     </footer>
@@ -60,16 +64,24 @@
       // japanese
       const APPNAME_STR_JA = '競馬スクレイピングツール';
       const GETURLS_STR_JA = 'URL取得';
+      const DATE_STR_JA = '開催日';
       const GETCROPS_STR_JA = '産駒成績取得';
       const GETTRAINING_STR_JA = '調教取得';
       const CONFIG_STR_JA = '設定';
+      const SUCCESS_STR_JA = '成功:';
+      const FAIL_STR_JA = '失敗:';
+      const SELECTCSV_STR_JA = 'CSVファイルを選んでください。';
       const EXIT_STR_JA = '終了';
       // english
       const APPNAME_STR_EN = 'Data HorseData Scraper';
       const GETURLS_STR_EN = 'Get Url';
+      const DATE_STR_EN = 'Racing Date';
       const GETCROPS_STR_EN = 'Get Crop Results';
       const GETTRAINING_STR_EN = 'Get Trainings';
       const CONFIG_STR_EN = 'Config';
+      const SUCCESS_STR_JEN = 'success:';
+      const FAIL_STR_EN = 'fail:';
+      const SELECTCSV_STR_EN = 'Select CSV File';
       const EXIT_STR_EN = 'Exit';
       // doms
       const maintitleDom = document.getElementById("maintitle");
@@ -79,18 +91,22 @@
       const getcropsButtonDom = document.getElementById("getcrops_button");
       const gettrainingDom = document.getElementById("gettraining");
       const gettrainingButtonDom = document.getElementById("gettraining_button");
-      const configDom = document.getElementById("config");
       const getconfigButtonDom = document.getElementById("config_button");
       const exitDom = document.getElementById("exit_button");
+      const successHeadDom = document.getElementById('successhead');
       const successDom = document.getElementById('success');
+      const failHeadDom = document.getElementById('failhead');
       const failDom = document.getElementById('fail');
       const racePlaceDom = document.getElementById('place');
       const successtotalDom = document.getElementById('successtotal');
       const failtotalDom = document.getElementById('failtotal');
       const selectBoxDom = document.getElementById("fileSelect");
       const modalDialogDom = document.getElementById('modalDialog');
+      const dialogTitleDom = document.getElementById('dialog-title');
       const okButtonDom = document.getElementById('okButton');
       const ngButtonDom = document.getElementById('ngButton');
+      const dateDom = document.getElementById("flatpickr");
+      const racingdateDom = document.getElementById("racingdate");
 
       /// ipc
       // before ready
@@ -98,12 +114,10 @@
 
       // be ready
       window.api.on("ready", arg => {
-        // change language
-        changeLanguage(arg);
-      });
-
-      // be ready
-      window.api.on("topready", arg => {
+        // init calender
+        flatpickr("#flatpickr", {
+          locale: "ja"
+        });
         // change language
         changeLanguage(arg);
       });
@@ -125,17 +139,23 @@
       window.api.on("file", arg => {
         // set globally
         globalfileList = arg;
-        // make modal
-        arg.forEach((file, index) => {
-           // option elem
+        // init selectbox
+        if (selectBoxDom.hasChildNodes()) {
+          while (selectBoxDom.childNodes.length > 0) {
+            selectBoxDom.removeChild(selectBoxDom.firstChild)
+          }
+        }
+        // set options
+        for(i=0;i<arg.file.length;i++) {
+          // option elem
           const option = document.createElement("option");
           // set value
-          option.value = index + 1;
+          option.value = i + 1;
           // set text
-          option.text = file;
+          option.text = arg.file[i].substring(0, 30) + " " + arg.date[i];
           // appned options
           selectBoxDom.appendChild(option);
-        });
+        }
         // show modal
         modalDialogDom.showModal();
         // avoid scrolling
@@ -202,7 +222,7 @@
       const getTrainings = () => {
         try {
           // send training result
-          window.api.send("training");
+          window.api.send("training", dateDom.value);
 
         } catch (e) {
           // error
@@ -244,9 +264,12 @@
           getcropsButtonDom.innerHTML = GETCROPS_STR_JA;
           gettrainingDom.innerHTML = GETTRAINING_STR_JA;
           gettrainingButtonDom.innerHTML = GETTRAINING_STR_JA;
-          configDom.innerHTML = CONFIG_STR_JA;
           getconfigButtonDom.innerHTML = CONFIG_STR_JA;
           exitDom.innerHTML = EXIT_STR_JA;
+          successHeadDom.innerHTML = SUCCESS_STR_JA;
+          failHeadDom.innerHTML = FAIL_STR_JA;
+          racingdateDom.innerHTML = DATE_STR_JA;
+          dialogTitleDom.innerHTML = SELECTCSV_STR_JA;
           document.documentElement.setAttribute("lang", 'ja');
           // english
         } else {
@@ -259,9 +282,12 @@
           getcropsButtonDom.innerHTML = GETCROPS_STR_EN;
           gettrainingDom.innerHTML = GETTRAINING_STR_EN;
           gettrainingButtonDom.innerHTML = GETTRAINING_STR_EN;
-          configDom.innerHTML = CONFIG_STR_EN;
           getconfigButtonDom.innerHTML = CONFIG_STR_EN;
           exitDom.innerHTML = EXIT_STR_EN;
+          successHeadDom.innerHTML = SUCCESS_STR_EN;
+          failHeadDom.innerHTML = FAIL_STR_EN;
+          racingdateDom.innerHTML = DATE_STR_EN;
+          dialogTitleDom.innerHTML = SELECTCSV_STR_EN;
           document.documentElement.setAttribute("lang", 'en');
         }
       }
