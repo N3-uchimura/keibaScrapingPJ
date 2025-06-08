@@ -33,10 +33,14 @@
         <button id="config_button" class="button-g button-6 button-wide" value="config"
           onclick="configPage();">Config</button>
       </div>
-      <div class="progressarea">
+      <div class="status_area">
+        <div id="status"></div>
+        <div id="targetpage"></div>
+      </div>
+      <div class="status_area">
         <div><span id="place"></span></div>
-        <div id="successhead">success:<span id="success"></span>/<span id="successtotal"></span></div>
-        <div id="failhead">fail:<span id="fail"></span>/<span id="failtotal"></span></div>
+        <div><span id="successhead">success:</span><span id="success"></span>/<span id="successtotal"></span></div>
+        <div><span id="failhead">fail:</span><span id="fail"></span>/<span id="failtotal"></span></div>
       </div>
       <div class="operation_area">
         <button id="exit_button" class="button-g button-1 button-wide" value="exit" onclick="exitPage();">Exit</button>
@@ -84,6 +88,8 @@
       const SELECTCSV_STR_EN = 'Select CSV File';
       const EXIT_STR_EN = 'Exit';
       // doms
+      const pageDom = document.getElementById('targetpage');
+      const statusDom = document.getElementById('status');
       const maintitleDom = document.getElementById("maintitle");
       const geturlDom = document.getElementById("geturl");
       const geturlButtonDom = document.getElementById("geturl_button");
@@ -146,7 +152,7 @@
           }
         }
         // set options
-        for(i=0;i<arg.file.length;i++) {
+        for (i = 0; i < arg.file.length; i++) {
           // option elem
           const option = document.createElement("option");
           // set value
@@ -172,7 +178,7 @@
         // get selected index
         const selected = selectBoxDom.selectedIndex;
         // send index
-        window.api.send("sire", globalfileList[selected-1]);
+        window.api.send("sire", globalfileList[selected - 1]);
       });
 
       // close modal
@@ -182,6 +188,20 @@
         modalDialogDom.close();
         // clear style
         document.documentElement.removeAttribute("style");
+      });
+
+      // update status
+      window.api.on('statusUpdate', arg => {
+        try {
+          // status 
+          statusDom.innerHTML = arg.status;
+          // target
+          pageDom.innerHTML = arg.target;
+
+        } catch (e) {
+          // error
+          console.log(e);
+        }
       });
 
       // success

@@ -21,27 +21,27 @@ class Mkdir {
   constructor(logger: any) {
     // logger setting
     Mkdir.logger = logger;
-    Mkdir.logger.info('mkdir: mkdir initialized.');
+    Mkdir.logger.debug('mkdir: mkdir initialized.');
   }
 
   // mkDir
   mkDir = async (dir: string): Promise<void> => {
     return new Promise(async (resolve, _) => {
       try {
-        Mkdir.logger.info('mkdir: mkdir started.');
+        Mkdir.logger.debug('mkdir: mkdir started.');
         // not exists
         if (!existsSync(dir)) {
           // make dir
           await mkdir(dir);
 
-          Mkdir.logger.info('mkdir: mkdir completed.');
+          Mkdir.logger.debug('mkdir: mkdir completed.');
         } else {
-          console.log('already exists.');
+          Mkdir.logger.debug('already exists.');
         }
         resolve();
       } catch (err: unknown) {
         // error
-        console.log(err);
+        Mkdir.logger.error(err);
         resolve();
       }
     });
@@ -51,7 +51,7 @@ class Mkdir {
   mkDirAll = async (dirs: string[]): Promise<void> => {
     return new Promise(async (resolve1, _) => {
       try {
-        Mkdir.logger.info('mkdir: all mkdir started.');
+        Mkdir.logger.debug('mkdir: all mkdir started.');
         // make all dir
         Promise.all(
           dirs.map(async (dir: string): Promise<void> => {
@@ -73,12 +73,12 @@ class Mkdir {
             });
           })
         ).then(() => resolve1());
-        Mkdir.logger.info('mkdir: mkDirAll started.');
+        Mkdir.logger.debug('mkdir: mkDirAll started.');
 
         // make dir
       } catch (e: unknown) {
         // error
-        console.log(e);
+        Mkdir.logger(e);
         resolve1();
       }
     });

@@ -20,14 +20,14 @@ class Dialog {
   constructor(logger: any) {
     // logger setting
     Dialog.logger = logger;
-    Dialog.logger.info('dialog: initialize mode');
+    Dialog.logger.debug('dialog: initialize mode');
   }
 
   /// show question
   // show yes/no
   showQuetion(title: string, message: string, detail: string): number {
     try {
-      Dialog.logger.info('dialog: showQuetion started.');
+      Dialog.logger.debug('dialog: showQuetion started.');
       // quetion message option
       const options: Electron.MessageBoxSyncOptions = {
         type: 'question',
@@ -39,12 +39,12 @@ class Dialog {
       };
       // selected number
       const selected: number = dialog.showMessageBoxSync(options);
-      Dialog.logger.info('dialog: showQuetion finished.');
+      Dialog.logger.debug('dialog: showQuetion finished.');
       // return selected
       return selected;
     } catch (e) {
       // error
-      console.log(e);
+      Dialog.logger.error(e);
       return 99;
     }
   }
@@ -52,7 +52,7 @@ class Dialog {
   // show image
   showImage(properties: any): any {
     try {
-      Dialog.logger.info('dialog: showImage started.');
+      Dialog.logger.debug('dialog: showImage started.');
       // quetion message option
       const options: Electron.OpenDialogSyncOptions = {
         properties: properties, // file
@@ -64,12 +64,12 @@ class Dialog {
       };
       // result
       const result: any = dialog.showOpenDialog(options);
-      Dialog.logger.info('dialog: showImage finished.');
+      Dialog.logger.debug('dialog: showImage finished.');
       // return selected
       return result;
     } catch (e) {
       // error
-      console.log(e);
+      Dialog.logger.error(e);
       return 99;
     }
   }
@@ -77,7 +77,7 @@ class Dialog {
   // show message
   showmessage(type: string, message: string) {
     try {
-      Dialog.logger.info('dialog: showmessage started.');
+      Dialog.logger.debug('dialog: showmessage started.');
       // mode
       let tmpType:
         | 'none'
@@ -123,9 +123,9 @@ class Dialog {
       };
       // show dialog
       dialog.showMessageBox(options);
-      Dialog.logger.info('dialog: showmessage finished.');
+      Dialog.logger.debug('dialog: showmessage finished.');
     } catch (e) {
-      console.log(e);
+      Dialog.logger.error(e);
     }
   }
 }

@@ -1,13 +1,12 @@
 {
   "name": "numthree.net.getkeiba",
   "productName": "getkeiba",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "application for getting keiba data.",
   "main": "build/getkeiba.js",
   "scripts": {
     "build": "tsc && chcp 65001",
-    "start": "tsc && chcp 65001 && electron .",
-    "package-win": "tsc && chcp 65001 && electron-packager . --asar --overwrite --platform=win32 --arch=ia32 --no-prune --icon=assets/keiba128.ico --out=release-builds --electronVersion=29.3.0"
+    "start": "tsc && chcp 65001 && electron ."
   },
   "keywords": [],
   "author": {
@@ -21,15 +20,15 @@
     "dotenv": "^16.5.0",
     "electron-log": "^5.3.0",
     "iconv-lite": "^0.6.3",
-    "keytar": "^7.9.0",
     "mime-types": "^3.0.1",
+    "node-cache": "^5.1.2",
     "puppeteer": "^23.6.1"
   },
   "devDependencies": {
     "@electron/packager": "^18.3.6",
     "@types/electron": "^1.6.12",
-    "@types/mime-types": "^3.0.0",
-    "@types/node": "^22.15.27",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^22.15.30",
     "electron": "^31.7.7",
     "typescript": "^4.6.4"
   },

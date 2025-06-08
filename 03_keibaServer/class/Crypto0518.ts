@@ -29,7 +29,7 @@ class Crypto {
       Crypto.key = key ?? '';
       Crypto.logger.debug('crypto: constructed');
     } catch (e) {
-      Crypto.logger.error(e);
+      console.log(e);
     }
   }
 
@@ -57,7 +57,7 @@ class Crypto {
         resolve(ivWithEncrypted);
         Crypto.logger.debug('crypto: encrypt finished.');
       } catch (e) {
-        Crypto.logger.error(e);
+        console.log(e);
         reject('error');
       }
     });
@@ -81,7 +81,7 @@ class Crypto {
         resolve(decrypted);
         Crypto.logger.debug('crypto: decrypt finished.');
       } catch (e) {
-        Crypto.logger.error(e);
+        console.log(e);
         reject('error');
       }
     });
@@ -100,7 +100,7 @@ class Crypto {
         );
         Crypto.logger.debug('crypto: random finished.');
       } catch (e) {
-        Crypto.logger.error(e);
+        console.log(e);
         reject('error');
       }
     });
@@ -124,7 +124,7 @@ class Crypto {
         });
         Crypto.logger.debug('crypto: generate password finished.');
       } catch (e) {
-        Crypto.logger.error(e);
+        console.log(e);
         reject('error');
       }
     });
@@ -148,7 +148,7 @@ class Crypto {
         resolve(hash === checkHash);
         Crypto.logger.debug('crypto: validate password finished.');
       } catch (e) {
-        Crypto.logger.error(e);
+        console.log(e);
         reject('error');
       }
     });

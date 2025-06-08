@@ -16,7 +16,9 @@ import { config as dotenv } from 'dotenv'; // dotenv
 import helmet from 'helmet'; // helmet
 import Logger from './class/Logger'; // logger
 import { getRouter } from './routes/getroutes'; // router
-import { postRaceRouter } from './routes/postraceroutes'; // router
+import { postRaceRouter } from './routes/postraceroutes'; // race router
+import { postAuthRouter } from './routes/postauthroutes'; // auth router
+
 // dotenv
 dotenv({ path: path.join(__dirname, '.env') });
 // logger setting
@@ -42,6 +44,8 @@ app.use('/', getRouter());
 /// POST
 // race root
 app.use('/race/', postRaceRouter());
+// auth root
+app.use('/auth/', postAuthRouter());
 
 // 404 handler
 app.all(/(.*)/, (_, res) => {

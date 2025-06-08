@@ -57,7 +57,7 @@ export class Scrape {
         // lauch browser
         Scrape.browser = await puppeteer.launch(puppOptions);
         // create new page
-        Scrape.page = await Scrape.browser.newPage();
+        Scrape.page = (await Scrape.browser.pages())[0];
         // set viewport
         Scrape.page.setViewport({
           width: 1920,

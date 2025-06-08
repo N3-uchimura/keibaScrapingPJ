@@ -6,28 +6,30 @@
 
 "use strict";
 
+/// Constants
 // name space
 import { myConst, mySelectors, myRaces } from './consts/globalvariables';
-
-//* Constants
 const WINDOW_WIDTH: number = 1000; // window width
 const WINDOW_HEIGHT: number = 1000; // window height
 
-//* Modules
+/// Modules
 import * as path from 'node:path'; // path
-import { readdir, stat } from 'node:fs/promises'; // filesystem
+import { existsSync } from 'node:fs'; // filesystem
+import { readFile, writeFile, readdir, stat, utimes } from 'node:fs/promises'; // filesystem
 import * as mime from 'mime-types'; // mime
 import dayjs from 'dayjs'; // dayjs
 import axios from "axios"; // http
-import keytar from "keytar"; // save key
 import { BrowserWindow, app, ipcMain, Tray, Menu, nativeImage } from "electron"; // electron
 import { config as dotenv } from 'dotenv'; // dotenv
 import { Scrape } from './class/ElScrape0531'; // custom Scraper
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
+import Crypto from './class/Crypto0518'; // crypto
 import CSV from './class/ElCsv0414'; // aggregator
 import MKDir from './class/ElMkdir0414'; // mdkir
-dotenv({ path: path.join(__dirname, '../.env') }); // env
+import NodeCache from "node-cache"; // node-cache
+dotenv({ path: path.join(__dirname, '../.manenv') }); // env
+
 // desktop path
 const dir_home =
   process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] ?? "";
@@ -46,10 +48,14 @@ const scraper = new Scrape(logger);
 const mkdirManager = new MKDir(logger);
 // aggregator
 const csvMaker = new CSV(myConst.CSV_ENCODING, logger);
+// crypto
+const cryptoMaker: Crypto = new Crypto(logger, process.env.CRYPTO_KEY!);
 // dialog
 const dialogMaker: Dialog = new Dialog(logger);
+// cache
+const cacheMaker: NodeCache = new NodeCache();
 
-//* interfaces
+/// interfaces
 // window option
 interface windowOption {
   width: number; // window width
@@ -63,7 +69,9 @@ let resultArray: any[] = [];
 // selector array
 const selectorArray: string[] = [mySelectors.TURF_SELECTOR, mySelectors.TURF_WIN_SELECTOR, mySelectors.DIRT_SELECTOR, mySelectors.DIRT_WIN_SELECTOR, mySelectors.TURF_DIST_SELECTOR, mySelectors.DIRT_DIST_SELECTOR];
 
-//* General variables
+/*
+ main
+*/
 // main window
 let mainWindow: any = null;
 // quit flg
@@ -151,13 +159,31 @@ app.on("ready", async () => {
   logger.info("app: electron is ready");
   // make window
   createWindow();
-
   // menu label
   let displayLabel: string = '';
   // close label
   let closeLabel: string = '';
+  // env path
+  const envfilePath: string = path.join(__dirname, "..", ".env");
+  // ifnot exists make .env
+  if (!existsSync(envfilePath)) {
+    await utimes(envfilePath, new Date(), new Date());
+  } else {
+    // clean up
+    await writeFile(envfilePath, '');
+  }
+  // key
+  const initKey = await readFile(path.join(__dirname, "..", "assets", "init.txt"), "utf8");
+  // get secretkey
+  const secretKey: any = await httpsPost('https://keiba.numthree.net/auth/getsecretkey', { key: initKey });
+  // get secretiv
+  const secretKeyIv: any = await httpsPost('https://keiba.numthree.net/auth/getsecretiv', { key: initKey });
+  // get secret
+  const secret: string = await cryptoMaker.decrypt(secretKey, secretKeyIv);
+  // write to .env
+  await writeFile(envfilePath, `SECRET=${secret}`);
   // get language
-  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+  const language = cacheMaker.get('language') ?? 'japanese';
   // switch on language
   if (language == 'japanese') {
     // set menu label
@@ -228,16 +254,18 @@ app.on("window-all-closed", () => {
 ipcMain.on("beforeready", async (_, __) => {
   logger.info("app: beforeready app");
   // language
-  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+  const initlanguage = await readFile(path.join(__dirname, "..", "assets", "language.txt"), "utf8");
+  // language
+  cacheMaker.set('language', initlanguage);
   // be ready
-  mainWindow.send("ready", language);
+  mainWindow.send("ready", initlanguage);
 });
 
 // config
 ipcMain.on("config", async (_, arg: any) => {
   logger.info("app: config app");
   // language
-  const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+  const language = cacheMaker.get('language') ?? 'japanese';
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../config.html"));
   // language
@@ -247,12 +275,34 @@ ipcMain.on("config", async (_, arg: any) => {
 // save
 ipcMain.on("save", async (_, arg: any) => {
   logger.info("app: save config");
-  // date
-  const language: string = String(arg);
   // language
-  await keytar.setPassword('language', 'admin', language);
+  const language: string = String(arg.language);
+  // mail
+  const userMail: string = String(arg.mail);
+  // password
+  const userPass: string = String(arg.password);
+  // token
+  const userToken: string = String(arg.key);
+  // pass encryption
+  const raceNoData: any = await httpsPost('https://keiba.numthree.net/auth/getsecretkey', {});
+
+  // save
+  await writeFile(path.join(__dirname, "..", "assets", "language.txt"), language);
+  // language
+  cacheMaker.set('language', language);
   // goto config page
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
+  // language
+  mainWindow.send("topready", language);
+});
+
+// top
+ipcMain.on("top", async (_, arg: any) => {
+  logger.info("app: top");
+  // goto config page
+  await mainWindow.loadFile(path.join(__dirname, "../index.html"));
+  // language
+  const language = cacheMaker.get('language') ?? 'japanese';
   // language
   mainWindow.send("topready", language);
 });
@@ -281,12 +331,16 @@ ipcMain.on("url", async (event: any, _) => {
     logger.info("ipc: geturl mode");
     // make dir
     mkdirManager.mkDir('csv');
-     // success Counter
+    // success Counter
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // status message
+    let statusmessage: string;
     // finish message
     let endmessage: string;
+    // language
+    const language = cacheMaker.get('language') ?? 'japanese';
     // header array
     const columnArray: string[] = ['horse', 'url'];
     // file reading
@@ -303,11 +357,11 @@ ipcMain.on("url", async (event: any, _) => {
     // wait for loading
     await scraper.doWaitFor(3000);
     // send totalWords
-    event.sender.send("total", {len: records.length});
+    event.sender.send("total", { len: records.length });
 
     // loop words
     for (const rd of records) {
-     try {
+      try {
         // empty array
         let tmpObj: any = {
           horse: '', // horse name
@@ -330,12 +384,29 @@ ipcMain.on("url", async (event: any, _) => {
         if (tmpUrl && tmpUrl != '') {
           // inset into array
           resultArray.push(tmpObj);
+          // switch on language
+          if (language == 'japanese') {
+            // set finish message
+            statusmessage = '種牡馬URL取得中...';
+          } else {
+            // set finish message
+            statusmessage = 'Getting stallion urls...';
+          }
+          // URL
+          event.sender.send('statusUpdate', {
+            status: statusmessage,
+            target: tmpObj.horse
+          });
           // increment success
           successCounter++;
         } else {
           // increment fail
           failCounter++;
         }
+        // send success
+        event.sender.send("success", successCounter);
+        // send fail
+        event.sender.send("fail", failCounter);
 
       } catch (e: unknown) {
         logger.error(e);
@@ -343,10 +414,6 @@ ipcMain.on("url", async (event: any, _) => {
         failCounter++;
 
       } finally {
-        // send success
-        event.sender.send("success", successCounter);
-        // send fail
-        event.sender.send("fail", failCounter);
         // goto page
         await scraper.doGo(myConst.BASE_URL);
         // wait for loading
@@ -359,9 +426,7 @@ ipcMain.on("url", async (event: any, _) => {
     const filePath: string = path.join(__dirname, '../csv', formattedDate + '.csv');
     // make csv data
     await csvMaker.makeCsvData(resultArray, columnArray, filePath);
-    
-    // language
-    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+
     // switch on language
     if (language == 'japanese') {
       // set finish message
@@ -383,6 +448,8 @@ ipcMain.on("url", async (event: any, _) => {
 ipcMain.on("presire", async (event: any, _) => {
   try {
     logger.info("ipc: presire mode");
+    // make dir
+    mkdirManager.mkDir('csv');
     // date
     let fixedDates: any[] = [];
     // promises
@@ -392,15 +459,15 @@ ipcMain.on("presire", async (event: any, _) => {
     // files
     const files: any = await readdir(dirPath);
     // extract csv
-    const csvFiles: any = files.filter((file: any) =>  mime.lookup(path.extname(file)) == 'text/csv');
+    const csvFiles: any = files.filter((file: any) => mime.lookup(path.extname(file)) == 'text/csv');
     // make promises
-    for (let csv of csvFiles) { 
+    for (let csv of csvFiles) {
       promises.push(stat(path.join(dirPath, csv)));
     }
     // get from DB
     const csvStatsArray: any = await Promise.all(promises);
     // set date
-    for (let stat of csvStatsArray) { 
+    for (let stat of csvStatsArray) {
       fixedDates.push(dayjs(stat.mtime).format("YYYY-MM-DD HH:mm:ss"));
     }
     // send totalWords
@@ -422,8 +489,12 @@ ipcMain.on("sire", async (event: any, arg: any) => {
     let successCounter: number = 0;
     // fail Counter
     let failCounter: number = 0;
+    // status message
+    let statusmessage: string;
     // finish message
     let endmessage: string;
+    // language
+    const language = cacheMaker.get('language') ?? 'japanese';
     // csv path
     const csvFilePath: string = path.join(__dirname, '../csv', String(arg));
     // read csv file
@@ -457,8 +528,21 @@ ipcMain.on("sire", async (event: any, arg: any) => {
         await scraper.doWaitFor(3000);
         logger.info(`goto ${myConst.SIRE_BASE_URL + urls[i].replace(myConst.HORSE_BASE_URL, '')}`);
         // send totalWords
-        event.sender.send("total", {len: urls.length, place: horses[i]});
-        
+        event.sender.send("total", { len: urls.length, place: horses[i] });
+        // switch on language
+        if (language == 'japanese') {
+          // set finish message
+          statusmessage = '種牡馬産駒成績取得中...';
+        } else {
+          // set finish message
+          statusmessage = 'Getting crops results...';
+        }
+        // URL
+        event.sender.send('statusUpdate', {
+          status: statusmessage,
+          target: tmpObj.horse
+        });
+
         // get data
         for (let j: number = 0; j < selectorArray.length; j++) {
           try {
@@ -478,7 +562,7 @@ ipcMain.on("sire", async (event: any, arg: any) => {
 
             } else {
               logger.debug('no selector');
-              
+
             }
 
           } catch (e: unknown) {
@@ -486,12 +570,11 @@ ipcMain.on("sire", async (event: any, arg: any) => {
 
           }
         }
-        
         // add to result array
         resultArray.push(tmpObj);
         // increment success
         successCounter++;
-        
+
       } catch (e: unknown) {
         logger.error(e);
         // increment fail
@@ -512,8 +595,6 @@ ipcMain.on("sire", async (event: any, arg: any) => {
     const filePath: string = path.join(dir_desktop, formattedDate + '.csv');
     // make csv
     await csvMaker.makeCsvData(resultArray, csvColumnArray, filePath);
-    // language
-    const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
     // switch on language
     if (language == 'japanese') {
       // set finish message
@@ -540,22 +621,26 @@ ipcMain.on("training", async (event: any, arg: any) => {
     // fail Counter
     let failCounter: number = 0;
     // aget date
-    await keytar.setPassword('date', 'admin', arg);
+    cacheMaker.set('date', arg);
+    // status message
+    let statusmessage: string;
     // finish message
     let endmessage: string;
-    
+    // get language
+    const language = cacheMaker.get('language') ?? 'japanese';
     // formattedDate
     const dateString: string = (new Date).toISOString().slice(0, 10);
     // get date
-    const date: string = await keytar.getPassword('date', 'admin') ?? dateString;
+    const date: string = cacheMaker.get('date') ?? dateString;
     // race data
     const raceNoData: any = await httpsPost('https://keiba.numthree.net/race/getracingno', { date: date });
+    logger.debug(raceNoData);
     // empty
     if (raceNoData.no.length == 0) {
       // error message
       let racingErrorMsg: string;
-      // get date
-      const language: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
+      // get language
+      const language = cacheMaker.get('language') ?? 'japanese';
       // switch language
       if (language == 'japanese') {
         // japanese error
@@ -605,8 +690,8 @@ ipcMain.on("training", async (event: any, arg: any) => {
       failCounter = 0;
       // index
       const targetIdx: number = Number(idx);
-      // get date
-      const localLanguage: string = await keytar.getPassword('language', 'admin') ?? 'japanese';
+      // get language
+      const localLanguage = cacheMaker.get('language') ?? 'japanese';
       // switch language
       if (localLanguage == 'japanese') {
         // set japanese racing cource
@@ -644,6 +729,19 @@ ipcMain.on("training", async (event: any, arg: any) => {
           // loop each horses
           for await (let i of horsenums) {
             try {
+              // switch on language
+              if (language == 'japanese') {
+                // set finish message
+                statusmessage = `${targetCourseName} 調教取得中...`;
+              } else {
+                // set finish message
+                statusmessage = `Getting ${targetCourseName} Training...`;
+              }
+              // URL
+              event.sender.send('statusUpdate', {
+                status: statusmessage,
+                target: `${String(j)}R`
+              });
               // empty array
               let tmpObj: { [key: string]: string } = {
                 race: '', // race
@@ -744,8 +842,7 @@ ipcMain.on("training", async (event: any, arg: any) => {
       // write data
       await csvMaker.makeCsvData(finalJsonArray.flat(), trainingColumns, filePath);
       logger.info(`csv completed.`);
-      // get language
-      const language = await keytar.getPassword('language', 'admin') ?? 'japanese';
+
       // switch on language
       if (language == 'japanese') {
         // set finish message

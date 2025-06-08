@@ -6,10 +6,11 @@
 
 'use strict';
 
+/// Constants
 // namespace
 import { myConst } from '../consts/globalvariables';
 
-// modules
+/// Modules
 import { Router } from 'express'; // express
 import Logger from '../class/Logger'; // logger
 // SQL
@@ -17,6 +18,7 @@ import { selectJoinAsset } from '../modules/mysqlModule';
 // logger setting
 const logger = new Logger(myConst.APP_NAME);
 
+/// Router
 // race posing
 export const postRaceRouter = () => {
   // router

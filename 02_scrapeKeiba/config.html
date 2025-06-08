@@ -6,16 +6,34 @@
   <title>Data HorseData Scraper Config</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
   <link rel="stylesheet" href="css/index.css">
-  
 </head>
 
 <body>
   <h1 id="maintitle">Data HorseData Scraper Config</h1>
-  <h4>
-    <div class="operation_area">
-      <input type="checkbox" id="language" checked><span id="languagearea">Japanese</span>
-    </div>
-  </h4>
+  <div class="language_area">
+    <h4 id="uselanguage">language</h4>
+    <input type="checkbox" id="language" checked><span id="languagearea">Japanese</span>
+  </div>
+  <div class="account_area">
+    <ul class="account_parent">
+      <li class="account_children">
+        <label id="tokenhead" for="token">プロダクトキー</label><br>
+        <input type="password" id="token" class="standard" name="token" placeholder="xxxx">
+      </li>
+      <li class="account_children display-none">
+        <label id="mailhead" for="mail">netkeiba mail</label><br>
+        <input type="text" id="mail" class="standard" name="mail" placeholder="xxx@xxx.xxx">
+      </li>
+      <li class="account_children display-none">
+        <label id="passhead" for="pass">netkeiba password</label><br>
+        <input type="password" id="pass" class="standard" name="pass" placeholder="xxxx">
+        <input type='hidden' id='hashedpassword' name='hashedpassword' value=''>
+      </li>
+      <li class="account_children display-none">
+        <p id="alert">※These data will not be sent to our server.</p>
+      </li>
+    </ul>
+  </div>
   <div class="operation_area">
     <button id="save_button" class="button-g button-6 button-wide" value="top" onclick="save();">Save</button>
   </div>
@@ -35,16 +53,32 @@
     // japanese
     const APPNAME_STR_JA = '競馬スクレイピングツール設定画面';
     const LANGUAGE_STR_JA = '日本語';
+    const USELANGUAGE_STR_JA = '使用言語';
+    const NETKEIBA_MAIL_STR_JA = 'netkeiba メール';
+    const NETKEIBA_PASS_STR_JA = 'netkeiba パスワード';
+    const PRODUCTKEY_STR_JA = 'プロダクトキー';
+    const ALERT_STR_JA = '※ この情報はサーバに送信されません。';
     const GOTOTOP_STR_JA = 'トップに戻る';
     const SAVE_STR_JA = '保存';
 
     // english
     const APPNAME_STR_EN = 'Data HorseData Scraper Config';
     const LANGUAGE_STR_EN = 'Japanese';
+    const USELANGUAGE_STR_EN = 'language';
+    const NETKEIBA_MAIL_STR_EN = 'netkeiba mail';
+    const NETKEIBA_PASS_STR_EN = 'netkeiba password';
+    const PRODUCTKEY_STR_EN = 'product key';
+    const ALERT_STR_EN = '※ This information will not be sent to our server.';
     const GOTOTOP_STR_EN = 'Goto Top';
     const SAVE_STR_EN = 'Save';
     // doms
-    
+    const uselanguageDom = document.getElementById("uselanguage");
+    const mailheadDom = document.getElementById("mailhead");
+    const passheadDom = document.getElementById("passhead");
+    const mailDom = document.getElementById("mail");
+    const passwordDom = document.getElementById("pass");
+    const tokenheadDom = document.getElementById("tokenhead");
+    const alertDom = document.getElementById("alert");
     const maintitleDom = document.getElementById("maintitle");
     const languageDom = document.getElementById("language");
     const languageareaDom = document.getElementById("languagearea");
@@ -58,15 +92,28 @@
     });
     /// ipc
     // save
-    const save = () => {
+    const save = async () => {
       try {
         console.log("save mode");
         // language detection
         const fixLang = languageDom.checked ? 'japanese' : 'english';
+        // netkeiba userMail
+        const userMail = mailDom.value;
+        // netkeiba userPass
+        const userPass = passwordDom.value;
+        // productKey
+        const productKey = languageDom.checked ? 'japanese' : 'english';
         // change language
         changeLanguage(fixLang);
+        // obj
+        const sendObj = {
+          mail: userMail,
+          password: userPass,
+          key: productKey,
+          language: fixLang,
+        }
         // send to main ipc
-        window.api.send("save", fixLang);
+        window.api.send("save", sendObj);
 
       } catch (e) {
         // error
@@ -79,7 +126,7 @@
       try {
         console.log("topPage mode");
         // send to main ipc
-        window.api.send("beforeready");
+        window.api.send("top");
 
       } catch (e) {
         // error
@@ -94,6 +141,11 @@
         japaneseFlg = true;
         languageDom.checked = true;
         document.title = APPNAME_STR_JA;
+        uselanguageDom.innerHTML = USELANGUAGE_STR_JA;
+        mailheadDom.innerHTML = NETKEIBA_MAIL_STR_JA;
+        passheadDom.innerHTML = NETKEIBA_PASS_STR_JA;
+        tokenheadDom.innerHTML = PRODUCTKEY_STR_JA;
+        alertDom.innerHTML = ALERT_STR_JA;
         maintitleDom.innerHTML = APPNAME_STR_JA;
         languageareaDom.innerHTML = LANGUAGE_STR_JA;
         gotoTopButtonDom.innerHTML = GOTOTOP_STR_JA;
@@ -104,6 +156,11 @@
         japaneseFlg = false;
         languageDom.checked = false;
         document.title = APPNAME_STR_EN;
+        uselanguageDom.innerHTML = USELANGUAGE_STR_EN
+        mailheadDom.innerHTML = NETKEIBA_MAIL_STR_EN
+        passheadDom.innerHTML = NETKEIBA_PASS_STR_EN
+        tokenheadDom.innerHTML = PRODUCTKEY_STR_EN;
+        alertDom.innerHTML = ALERT_STR_EN;
         maintitleDom.innerHTML = APPNAME_STR_EN
         languageareaDom.innerHTML = LANGUAGE_STR_EN;
         gotoTopButtonDom.innerHTML = GOTOTOP_STR_EN;
