@@ -16,7 +16,7 @@ import { } from '../@types/globaljoinsql.d';
 import * as path from 'path'; // path
 import { config as dotenv } from 'dotenv'; // dotenv
 import Logger from '../class/Logger'; // logger
-import SQL from '../class/MySqlJoin0427'; // sql
+import SQL from '../class/MySqlJoin0612'; // sql
 // dotenv setting
 dotenv({ path: path.join(__dirname, '../.env') });
 // logger
@@ -60,7 +60,7 @@ export const countAssets = async (table: string, columns: string[], data: any[][
 
 /* select */
 // select assets
-export const selectAsset = async (table: string, columns: string[], values: any[][], fields?: string[]): Promise<any> => {
+export const selectAsset = async (table: string, columns: string[], values: any[][], fields?: string[], limit?: number): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.debug('mysql: selectAsset mode');
@@ -69,7 +69,8 @@ export const selectAsset = async (table: string, columns: string[], values: any[
         table: table, // table
         columns: columns, // columns
         values: values, // values
-        fields: fields // fields
+        fields: fields, // fields
+        limit: limit // limit
       };
       // get target assets
       const targetAssetData: any = await myDB.selectDB(assetSelectArgs);
@@ -96,7 +97,7 @@ export const selectAsset = async (table: string, columns: string[], values: any[
 };
 
 // select assets with join
-export const selectJoinAsset = async (table: string, jointable: string, columns: string[], values: any[][], joincolumns: string[], joinvalues: any[][], fields: string[]): Promise<any> => {
+export const selectJoinAsset = async (table: string, jointable: string, columns: string[], values: any[][], joincolumns: string[], joinvalues: any[][], fields: string[], limit?: number): Promise<any> => {
   return new Promise(async (resolve, reject) => {
     try {
       logger.debug('mysql: selectJoinAsset mode');
@@ -111,6 +112,7 @@ export const selectJoinAsset = async (table: string, jointable: string, columns:
         joinvalues: joinvalues, // joined values
         joinid: 'id', // join target id
         fields: fields, // fields
+        limit: limit // limit
       };
       // extract joined assets
       const selectedJoinAssetData: any = await myDB.selectJoinDB(selectJoinAssetObj);

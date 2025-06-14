@@ -15,7 +15,7 @@ import * as path from 'path'; // path
 import { Router } from 'express'; // express
 import { config as dotenv } from 'dotenv'; // dotenv
 import NodeCache from "node-cache"; // node-cache
-import Crypto from '../class/Crypto0518'; // crypto
+import Crypto from '../class/Crypto0612'; // crypto
 import Logger from '../class/Logger'; // logger
 // dotenv
 dotenv({ path: path.join(__dirname, '.env') });
@@ -29,7 +29,7 @@ const cryptoMaker: Crypto = new Crypto(logger, process.env.CRYPTO_KEY!);
 const cacheMaker: NodeCache = new NodeCache();
 
 /// Router
-// auth posing
+// auth router
 export const postAuthRouter = () => {
   // router
   const router = Router();
@@ -40,21 +40,28 @@ export const postAuthRouter = () => {
       logger.info('getsecretkey mode');
       // token
       const reqToken: any = req.body.token ?? null;
-      // no token
-      if (!reqToken) {
+      // key
+      const reqKey: any = req.body.key ?? null;
+      // secret word
+      const reqWord: any = req.body.word ?? null;
+      // no token/key
+      if (!reqToken || !reqKey || !reqWord) {
         // error
-        throw new Error('auth: no token data');
+        throw new Error('auth: no necessary data');
       }
-      // ecnrypt
-      const cipher: any = cryptoMaker.encrypt(reqToken);
-      // save iv to cache
-      cacheMaker.set('iv', cipher.iv);
+      if (reqKey == process.env.ACCESS_KEY && reqWord == process.env.SECRET_WORD) {
+        // DB読込
+        const selectedAuthData: any = await selectAsset('user', ['productkey', 'usable'], [reqToken, [1]]);
+        // ecnrypt
 
-      logger.info(`getsecretkey completed.`);
-      // success
-      res.status(200).send({
-        key: cipher.encrypted,
-      });
+
+        logger.info(`getsecretkey completed.`);
+        // success
+        res.status(200).send({
+          key: '',
+        });
+      }
+
 
     } catch (e: unknown) {
       // error
@@ -68,7 +75,7 @@ export const postAuthRouter = () => {
     try {
       logger.info('getsecretkey mode');
       // key
-      const reqKey: any = req.body.token ?? null;
+      const reqKey: any = req.body.key ?? null;
       // no key
       if (!reqKey) {
         // error
@@ -76,8 +83,12 @@ export const postAuthRouter = () => {
       }
       // key ok
       if (reqKey == process.env.ACCESS_KEY) {
+        // secret key
+        const userSecretKey: string = await cryptoMaker.random(32);
+        // DB読込
+        const selectedAuthData: any = await selectAsset('user', ['buyed', 'usable'], [reqToken, [1]]);
         // ecnrypt
-        const cipher: any = cryptoMaker.encrypt(process.env.SECRET_KEY!);
+        const cipher: any = cryptoMaker.encrypt(userSecretKey);
         // save iv to cache
         cacheMaker.set('iv', cipher.iv);
         logger.info(`getsecretkey completed.`);
@@ -98,16 +109,53 @@ export const postAuthRouter = () => {
   });
 
   // get secret iv
-  router.post('/getsecretiv', async (_, res) => {
+  router.post('/getsecretiv', async (req, res) => {
     try {
       logger.info('getsecretiv mode');
-      // save iv to cache
-      const secretIv: string = cacheMaker.get('iv') ?? '';
-      logger.info(`getsecretiv completed.`);
-      // success
-      res.status(200).send({
-        iv: secretIv,
-      });
+      // key
+      const reqKey: any = req.body.key ?? null;
+      // no key
+      if (!reqKey) {
+        // error
+        throw new Error('auth: no key data');
+      }
+      // key ok
+      if (reqKey == process.env.ACCESS_KEY) {
+        // save iv to cache
+        const secretIv: string = cacheMaker.get('iv') ?? '';
+        logger.info(`getsecretiv completed.`);
+        // success
+        res.status(200).send({
+          iv: secretIv,
+        });
+      }
+
+    } catch (e: unknown) {
+      // error
+      res.status(200).send('error');
+      logger.error(e);
+    }
+  });
+
+  // get secret word
+  router.post('/getsecretwd', async (req, res) => {
+    try {
+      logger.info('getsecretwd mode');
+      // key
+      const reqKey: any = req.body.key ?? null;
+      // no key
+      if (!reqKey) {
+        // error
+        throw new Error('auth: no key data');
+      }
+      // key ok
+      if (reqKey == process.env.ACCESS_KEY) {
+        logger.info(`getsecretiv completed.`);
+        // success
+        res.status(200).send({
+          wd: process.env.SECRET_WORD,
+        });
+      }
 
     } catch (e: unknown) {
       // error

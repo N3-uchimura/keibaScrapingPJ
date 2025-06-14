@@ -3,7 +3,7 @@
  *
  * Crypto
  * encrypt & decrypt operation
- * updated: 2025/05/18
+ * updated: 2025/06/12
  **/
 
 'use strict';
@@ -28,7 +28,8 @@ class Crypto {
       // secret key
       Crypto.key = key ?? '';
       Crypto.logger.debug('crypto: constructed');
-    } catch (e) {
+
+    } catch (e: unknown) {
       console.log(e);
     }
   }
@@ -37,7 +38,7 @@ class Crypto {
   encrypt = async (plain: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: encrypt started.');
+        Crypto.logger.trace('crypto: encrypt started.');
         // make salt
         const iv: Buffer = crypto.randomBytes(16);
         // make cipher
@@ -55,9 +56,10 @@ class Crypto {
           encrypted: encrypted
         };
         resolve(ivWithEncrypted);
-        Crypto.logger.debug('crypto: encrypt finished.');
-      } catch (e) {
-        console.log(e);
+        Crypto.logger.trace('crypto: encrypt finished.');
+
+      } catch (e: unknown) {
+        Crypto.logger.error(e);
         reject('error');
       }
     });
@@ -67,9 +69,9 @@ class Crypto {
   decrypt = async (encrypted: string, iv: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: decrypt started.');
+        Crypto.logger.trace('crypto: decrypt started.');
         // make query
-        const decipher = crypto.createDecipheriv(
+        const decipher: any = crypto.createDecipheriv(
           Crypto.algorithm,
           Buffer.from(Crypto.key),
           Buffer.from(iv, 'base64')
@@ -79,9 +81,10 @@ class Crypto {
           decipher.update(encrypted, 'base64', 'utf8') + decipher.final('utf8');
         // return result
         resolve(decrypted);
-        Crypto.logger.debug('crypto: decrypt finished.');
-      } catch (e) {
-        console.log(e);
+        Crypto.logger.trace('crypto: decrypt finished.');
+
+      } catch (e: unknown) {
+        Crypto.logger.error(e);
         reject('error');
       }
     });
@@ -91,16 +94,17 @@ class Crypto {
   random = async (length: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: random started.');
+        Crypto.logger.trace('crypto: random started.');
         // return random text
         resolve(
           crypto
             .randomBytes(length)
             .reduce((p, i) => p + (i % 36).toString(36), '')
         );
-        Crypto.logger.debug('crypto: random finished.');
-      } catch (e) {
-        console.log(e);
+        Crypto.logger.trace('crypto: random finished.');
+
+      } catch (e: unknown) {
+        Crypto.logger.error(e);
         reject('error');
       }
     });
@@ -110,7 +114,7 @@ class Crypto {
   genPassword = async (password: string, pepper: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: generate password started.');
+        Crypto.logger.trace('crypto: generate password started.');
         // make query
         const salt: string = crypto.randomBytes(32).toString('hex');
         // return random text
@@ -122,9 +126,10 @@ class Crypto {
           salt: salt,
           hash: genHash
         });
-        Crypto.logger.debug('crypto: generate password finished.');
-      } catch (e) {
-        console.log(e);
+        Crypto.logger.trace('crypto: generate password finished.');
+
+      } catch (e: unknown) {
+        Crypto.logger.error(e);
         reject('error');
       }
     });
@@ -139,16 +144,17 @@ class Crypto {
   ): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: validate password started.');
+        Crypto.logger.trace('crypto: validate password started.');
         // make query
         const checkHash: string = crypto
           .pbkdf2Sync(password + pepper, salt, 10000, 64, 'sha512')
           .toString('hex');
         // validate
         resolve(hash === checkHash);
-        Crypto.logger.debug('crypto: validate password finished.');
-      } catch (e) {
-        console.log(e);
+        Crypto.logger.trace('crypto: validate password finished.');
+
+      } catch (e: unknown) {
+        Crypto.logger.error(e);
         reject('error');
       }
     });

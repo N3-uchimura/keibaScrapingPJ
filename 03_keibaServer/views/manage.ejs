@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# website: http://ogp.me/ns/website#">
+  <meta charset="UTF-8">
+  <title>
+    サイト管理画面
+  </title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta content="compass" name="description">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/manage.css">
+  <link rel="stylesheet" type="text/css" href="/css/button.css">
+</head>
+
+<body>
+  <header>
+    <h2>
+      管理画面
+    </h2>
+  </header>
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>プロダクトキー</th>
+          <th>ステータス</th>
+          <th>購入日時</th>
+        </tr>
+      </thead>
+      <% if (infos.length> 0) { %>
+        <tbody>
+          <% for ( let j=0; j < infos.length; j++ ) { %>
+            <tr>
+              <td>
+                <%= infos[j].id %>
+              </td>
+              <td>
+                <%= infos[j].name %>
+              </td>
+              <td>
+                <%= count[j] %>
+              </td>
+            </tr>
+            <% } %>
+              <% } %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">
+              <a href="<%= root %>/manage/">前の画面へ戻る</a>
+            </td>
+          </tr>
+        </tfoot>
+    </table>
+    <form action="/manage/pubproductkey" id="initform" method="post">
+      <h3>プロダクトキー取得</h3>
+      <input type="number" class="narrow" size="2" maxlength="2" name="number" value="">
+      <input type="hidden" name="secret" value="gLHQxafFwt">
+      <button type="submit" class="button-g button-standard" value="">キー取得</button>
+    </form>
+    <form action="/manage/addproductkey" id="initform" method="post">
+      <h3>プロダクトキー登録</h3>
+      <input type="number" class="narrow" size="2" maxlength="2" name="number" value="">
+      <input type="hidden" name="secret" value="gLHQxafFwt">
+      <button type="submit" class="button-g button-standard" value="">キー登録</button>
+    </form>
+  </main>
+  <footer>
+    <p class="copyright">Copyright 2025 N-three, LLC.</p>
+  </footer>
+</body>
+
+</html>

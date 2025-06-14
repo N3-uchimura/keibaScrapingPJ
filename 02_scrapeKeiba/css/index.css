@@ -32,7 +32,14 @@ p {
 }
 
 ul {
+  margin: 0;
+  padding: 0;
   list-style: none;
+}
+
+li {
+  margin: 0;
+  padding: 0;
 }
 
 ::placeholder {
@@ -60,12 +67,12 @@ ul {
 }
 
 .account_area {
-  width: 800px;
+  width: 100%;
   margin: 10px auto;
 }
 
 .account_area ul li {
-  width: 700px;
+  width: 100%;
   margin: 20px 0;
 }
 
@@ -76,8 +83,10 @@ ul {
 }
 
 .account_area ul li input {
-  width: 700px;
+  width: 100%;
+  max-width: 500px;
   height: 50px;
+  margin: 10px auto;
   font-size: 1.1rem;
 }
 
@@ -129,6 +138,10 @@ ul {
   border-color: rgba(0, 0, 0, 0.15);
   box-shadow: rgba(0, 0, 0, 0.06) 0 2px 4px;
   transform: translateY(0);
+}
+
+.button-standard {
+  width: 100px;
 }
 
 .button-wide {

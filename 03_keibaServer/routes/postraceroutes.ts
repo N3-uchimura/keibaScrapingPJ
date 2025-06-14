@@ -30,9 +30,9 @@ export const postRaceRouter = () => {
       logger.info('getracingno mode');
       // promises
       let promises: Promise<any>[] = [];
-      // promises
+      // race nos
       let raceNos: string[] = [];
-      // places
+      // race places
       let racePlaces: string[] = [];
       // racing date
       const reqraceDate: any = req.body.date ?? null;
@@ -45,7 +45,7 @@ export const postRaceRouter = () => {
       // racing date
       const tmpRacingdate: string = String(reqraceDate);
 
-      // if shorter then 4 char
+      // if shorter then 4 characters
       if (tmpRacingdate.length < 4) {
         throw new Error('reqraceDate: no date data');
       }

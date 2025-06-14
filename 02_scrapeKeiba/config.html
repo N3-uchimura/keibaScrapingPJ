@@ -19,6 +19,8 @@
       <li class="account_children">
         <label id="tokenhead" for="token">プロダクトキー</label><br>
         <input type="password" id="token" class="standard" name="token" placeholder="xxxx">
+        <button id="auth_button" class="button-g button-6 button-standard" value="top" onclick="auth();">Check</button>
+        <p id="result"></p>
       </li>
       <li class="account_children display-none">
         <label id="mailhead" for="mail">netkeiba mail</label><br>
@@ -73,6 +75,7 @@
     const SAVE_STR_EN = 'Save';
     // doms
     const uselanguageDom = document.getElementById("uselanguage");
+    const resultDom = document.getElementById("result");
     const mailheadDom = document.getElementById("mailhead");
     const passheadDom = document.getElementById("passhead");
     const mailDom = document.getElementById("mail");
@@ -84,13 +87,40 @@
     const languageareaDom = document.getElementById("languagearea");
     const gotoTopButtonDom = document.getElementById("top_button");
     const saveButtonDom = document.getElementById("save_button");
+    const authButtonDom = document.getElementById("auth_button");
 
     // be ready
     window.api.on("confready", arg => {
       // change language
       changeLanguage(arg);
     });
+
+    // auth result
+    window.api.on("authresult", arg => {
+      // change language
+      resultDom.innerHTML = arg;
+    });
+
     /// ipc
+    // auth
+    const auth = async () => {
+      try {
+        console.log("auth mode");
+        // productKey
+        const productKey = languageDom.checked ? 'japanese' : 'english';
+        // obj
+        const sendObj = {
+          key: productKey,
+        }
+        // send to main ipc
+        window.api.send("save", sendObj);
+
+      } catch (e) {
+        // error
+        window.api.send("error", e);
+      }
+    }
+
     // save
     const save = async () => {
       try {
@@ -101,15 +131,12 @@
         const userMail = mailDom.value;
         // netkeiba userPass
         const userPass = passwordDom.value;
-        // productKey
-        const productKey = languageDom.checked ? 'japanese' : 'english';
         // change language
         changeLanguage(fixLang);
         // obj
         const sendObj = {
           mail: userMail,
           password: userPass,
-          key: productKey,
           language: fixLang,
         }
         // send to main ipc

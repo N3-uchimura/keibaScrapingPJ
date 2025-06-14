@@ -26,43 +26,49 @@ class Logger {
 
   // construnctor
   constructor(dirname: string, level?: string) {
-    // log4js options
-    let log4jsOptions: any;
-    // log level
-    const loglevel: string = level ?? 'all';
+    try {
 
-    // log mode
-    // logger dir path
-    Logger.loggerDir = path.join(myConst.LOG_PATH, myConst.APP_NAME, dirname);
-    // Logger config
-    const prefix: string = `${dirname}-${new Date().toJSON().slice(0, 10)}`;
-    // set log4js options
-    log4jsOptions = {
-      appenders: {
-        app: {
-          type: 'dateFile',
-          filename: path.join(Logger.loggerDir, `${prefix}.log`)
-        },
-        result_raw: {
-          type: 'file',
-          filename: path.join(Logger.loggerDir, `${prefix}_debug.log`)
-        },
-        result: {
-          type: 'logLevelFilter',
-          appender: 'result_raw',
-          level: loglevel
-        },
-        out: { type: 'stdout' }
-      },
-      categories: {
-        default: { appenders: ['out', 'result', 'app'], level: loglevel }
-      }
-    };
 
-    // logger config
-    log4js.configure(log4jsOptions);
-    // logger instance
-    Logger.logger = log4js.getLogger(); // logger instance
+      // log4js options
+      let log4jsOptions: any;
+      // log level
+      const loglevel: string = level ?? 'all';
+
+      // log mode
+      // logger dir path
+      Logger.loggerDir = path.join(myConst.LOG_PATH, myConst.APP_NAME, dirname);
+      // Logger config
+      const prefix: string = `${dirname}-${new Date().toJSON().slice(0, 10)}`;
+      // set log4js options
+      log4jsOptions = {
+        appenders: {
+          app: {
+            type: 'dateFile',
+            filename: path.join(Logger.loggerDir, `${prefix}.log`)
+          },
+          result_raw: {
+            type: 'file',
+            filename: path.join(Logger.loggerDir, `${prefix}_debug.log`)
+          },
+          result: {
+            type: 'logLevelFilter',
+            appender: 'result_raw',
+            level: loglevel
+          },
+          out: { type: 'stdout' }
+        },
+        categories: {
+          default: { appenders: ['out', 'result', 'app'], level: loglevel }
+        }
+      };
+
+      // logger config
+      log4js.configure(log4jsOptions);
+      // logger instance
+      Logger.logger = log4js.getLogger(); // logger instance
+    } catch (e) {
+      console.log(e);
+    }
   }
 
   // log info
@@ -90,6 +96,7 @@ class Logger {
     // error
     if (e instanceof Error) {
       // error
+      Logger.logger.error(e.stack);
       Logger.logger.error(e.message);
     }
   };

@@ -3,7 +3,7 @@
  *
  * name：SQL
  * function：SQL with Join operation
- * updated: 2025/04/27
+ * updated: 2025/06/12
  **/
 
 'use strict';
@@ -68,7 +68,7 @@ class SQL {
         }
       } catch (e: unknown) {
         // error
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });
@@ -78,7 +78,7 @@ class SQL {
   countDB = async (args: countargs): Promise<number> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: countDB mode');
+        SQL.logger.trace('db: countDB mode');
         // total
         let total: number;
         // query string
@@ -158,19 +158,18 @@ class SQL {
               // set total
               total = result[0]['COUNT(*)'];
             }
-            SQL.logger.debug(`countDB: total is ${total}`);
+            SQL.logger.trace(`countDB: total is ${total}`);
             // return total
             resolve(total);
           })
           .catch((err: unknown) => {
             // error type
-            console.log(err);
+            SQL.logger.error(err);
             resolve(0);
           });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('countDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve(0);
       }
     });
@@ -180,7 +179,7 @@ class SQL {
   countJoinDB = async (args: countjoinargs): Promise<number> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: countjoinDB mode');
+        SQL.logger.trace('db: countjoinDB mode');
         // total
         let total: number;
         // query string
@@ -302,19 +301,18 @@ class SQL {
               // set total
               total = result[0]['COUNT(`' + table + '`.id)'];
             }
-            SQL.logger.debug(`countjoinDB: total is ${total}`);
+            SQL.logger.trace(`countjoinDB: total is ${total}`);
             // return total
             resolve(total);
           })
           .catch((err: unknown) => {
             // error
-            console.log(err);
+            SQL.logger.error(err);
             resolve(0);
           });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('countjoinDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve(0);
       }
     });
@@ -324,7 +322,7 @@ class SQL {
   selectDB = async (args: selectargs): Promise<any> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: selectDB mode');
+        SQL.logger.trace('db: selectDB mode');
         // query string
         let queryString: string;
         // array
@@ -449,22 +447,21 @@ class SQL {
           .then((result: any) => {
             // result exists
             if (result == 'error' || result == 'empty') {
-              SQL.logger.debug(`selectDB: ${result}`);
+              SQL.logger.trace(`selectDB: ${result}`);
             } else {
-              SQL.logger.debug('selectDB: success');
+              SQL.logger.trace('selectDB: success');
             }
             // do query
             resolve(result);
           })
           .catch((err: unknown) => {
             // error
-            console.log(err);
+            SQL.logger.error(err);
             resolve('error');
           });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('selectDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });
@@ -474,7 +471,7 @@ class SQL {
   selectJoinDB = async (args: joinargs): Promise<any> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: selectjoinDB mode');
+        SQL.logger.trace('db: selectjoinDB mode');
         // query string
         let queryString: string;
         // placeholder
@@ -648,23 +645,22 @@ class SQL {
             .then((result: any) => {
               // result exists
               if (result == 'error' || result == 'empty') {
-                SQL.logger.debug(`selectJoinDB: ${result}`);
+                SQL.logger.trace(`selectJoinDB: ${result}`);
               } else {
-                SQL.logger.debug('selectJoinDB: success');
+                SQL.logger.trace('selectJoinDB: success');
               }
               // do query
               resolve(result);
             })
             .catch((err: unknown) => {
               // error
-              console.log(err);
+              SQL.logger.error(err);
               resolve('error');
             });
         }
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('selectJoinDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });
@@ -674,7 +670,7 @@ class SQL {
   selectDoubleJoinDB = async (args: joindoubleargs): Promise<any> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: selectjoinDB mode');
+        SQL.logger.trace('db: selectjoinDB mode');
         // query string
         let queryString: string;
         // placeholder
@@ -900,23 +896,22 @@ class SQL {
             .then((result: any) => {
               // result exists
               if (result == 'error' || result == 'empty') {
-                SQL.logger.debug(`selectJoinDB: ${result}`);
+                SQL.logger.trace(`selectJoinDB: ${result}`);
               } else {
-                SQL.logger.debug('selectJoinDB: success');
+                SQL.logger.trace('selectJoinDB: success');
               }
               // do query
               resolve(result);
             })
             .catch((err: unknown) => {
               // error
-              console.log(err);
+              SQL.logger.error(err);
               resolve('error');
             });
         }
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('selectJoinDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });
@@ -926,7 +921,7 @@ class SQL {
   updateDB = async (args: updateargs): Promise<any> => {
     return new Promise(async (resolve1) => {
       try {
-        SQL.logger.debug('db: updateDB mode');
+        SQL.logger.trace('db: updateDB mode');
         // not
         let tmpQuery: string = '';
         // placeholder array
@@ -1017,16 +1012,16 @@ class SQL {
                 .then((result: any) => {
                   // result exists
                   if (result == 'error' || result == 'empty') {
-                    SQL.logger.debug(`updateDB: ${result}`);
+                    SQL.logger.trace(`updateDB: ${result}`);
                   } else {
-                    SQL.logger.debug('updateDB: success');
+                    SQL.logger.trace('updateDB: success');
                   }
                   // do query
                   resolve2(result);
                 })
                 .catch((err: unknown) => {
                   // error
-                  console.log(err);
+                  SQL.logger.error(err);
                   resolve2('error');
                 });
             })
@@ -1038,8 +1033,7 @@ class SQL {
         });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('updateDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve1('error');
       }
     });
@@ -1049,7 +1043,7 @@ class SQL {
   updateJoinDB = async (args: updatejoinargs): Promise<any> => {
     return new Promise(async (resolve1) => {
       try {
-        SQL.logger.debug('db: updateJoinDB mode');
+        SQL.logger.trace('db: updateJoinDB mode');
         // placeholder array
         let placeholder: any[] = [];
         // tmp placeholder array
@@ -1126,15 +1120,15 @@ class SQL {
                 .then((result: any) => {
                   // result exists
                   if (result == 'error' || result == 'empty') {
-                    SQL.logger.debug(`updateJoinDB: ${result}`);
+                    SQL.logger.trace(`updateJoinDB: ${result}`);
                   } else {
-                    SQL.logger.debug('updateJoinDB: success');
+                    SQL.logger.trace('updateJoinDB: success');
                   }
                   resolve2(result);
                 })
                 .catch((err: unknown) => {
                   // error
-                  console.log(err);
+                  SQL.logger.error(err);
                   resolve2('error');
                 });
             })
@@ -1146,8 +1140,7 @@ class SQL {
         });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('updateJoinDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve1('error');
       }
     });
@@ -1157,7 +1150,7 @@ class SQL {
   insertDB = async (args: insertargs): Promise<any> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: insertDB mode');
+        SQL.logger.trace('db: insertDB mode');
         // table
         const table: string = args.table;
         // columns
@@ -1175,21 +1168,20 @@ class SQL {
             // result exists
             if (result == 'error' || result == 'empty') {
               resolve(result);
-              SQL.logger.debug(`insertDB: ${result}`);
+              SQL.logger.trace(`insertDB: ${result}`);
             } else {
               resolve(result.insertId);
-              SQL.logger.debug('insertDB: success');
+              SQL.logger.trace('insertDB: success');
             }
           })
           .catch((err: unknown) => {
             // error
-            console.log(err);
+            SQL.logger.error(err);
             resolve('error');
           });
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('insertDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });
@@ -1199,7 +1191,7 @@ class SQL {
   insertNoDupDB = async (args: insertnodupargs): Promise<any> => {
     return new Promise(async (resolve) => {
       try {
-        SQL.logger.debug('db: insertNoDupDB mode');
+        SQL.logger.trace('db: insertNoDupDB mode');
         // query string
         let queryString: string
         // placeholder array
@@ -1238,21 +1230,20 @@ class SQL {
           // result exists
           if (result == 'error' || result == 'empty') {
             resolve(result);
-            SQL.logger.debug(`insertNoDupDB: ${result}`);
+            SQL.logger.trace(`insertNoDupDB: ${result}`);
           } else {
             resolve(result.insertId);
-            SQL.logger.debug('insertNoDupDB: success');
+            SQL.logger.trace('insertNoDupDB: success');
           }
         }).catch((err: unknown) => {
           // error
-          console.log(err);
+          SQL.logger.error(err);
           resolve('error');
         });
 
       } catch (e: unknown) {
         // error
-        SQL.logger.debug('insertNoDupDB: error');
-        console.log(e);
+        SQL.logger.error(e);
         resolve('error');
       }
     });

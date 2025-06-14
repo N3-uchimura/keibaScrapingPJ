@@ -28,18 +28,15 @@ import Crypto from './class/Crypto0518'; // crypto
 import CSV from './class/ElCsv0414'; // aggregator
 import MKDir from './class/ElMkdir0414'; // mdkir
 import NodeCache from "node-cache"; // node-cache
-dotenv({ path: path.join(__dirname, '../.manenv') }); // env
 
+// dotenv
+dotenv({ path: path.join(__dirname, '../man.env') });
 // desktop path
 const dir_home =
   process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"] ?? "";
 const dir_desktop = path.join(dir_home, "Desktop");
 // log level
 const LOG_LEVEL: string = myConst.LOG_LEVEL ?? 'all';
-// netkeiba id
-const netKeibaId: string = process.env.NETKEIBA_ID ?? '';
-// netkeiba pass
-const netKeibaPass: string = process.env.NETKEIBA_PASS ?? '';
 // loggeer instance
 const logger: ELLogger = new ELLogger(myConst.APP_NAME, LOG_LEVEL);
 // scraper
@@ -49,11 +46,15 @@ const mkdirManager = new MKDir(logger);
 // aggregator
 const csvMaker = new CSV(myConst.CSV_ENCODING, logger);
 // crypto
-const cryptoMaker: Crypto = new Crypto(logger, process.env.CRYPTO_KEY!);
+const cryptoMaker: Crypto = new Crypto(logger);
 // dialog
 const dialogMaker: Dialog = new Dialog(logger);
 // cache
 const cacheMaker: NodeCache = new NodeCache();
+// ID
+const NETKEIBA_ID: string = process.env.NETKEIBA_ID!;
+// PASS
+const NETKEIBA_PASS: string = process.env.NETKEIBA_PASS!;
 
 /// interfaces
 // window option
@@ -65,7 +66,6 @@ interface windowOption {
 }
 // result array
 let resultArray: any[] = [];
-
 // selector array
 const selectorArray: string[] = [mySelectors.TURF_SELECTOR, mySelectors.TURF_WIN_SELECTOR, mySelectors.DIRT_SELECTOR, mySelectors.DIRT_WIN_SELECTOR, mySelectors.TURF_DIST_SELECTOR, mySelectors.DIRT_DIST_SELECTOR];
 
@@ -100,7 +100,7 @@ const createWindow = (): void => {
     // ready
     mainWindow.once("ready-to-show", async () => {
       // dev mode
-      // mainWindow.webContents.openDevTools();
+      //mainWindow.webContents.openDevTools();
     });
 
     // minimize and stay on tray
@@ -134,6 +134,7 @@ const createWindow = (): void => {
     });
 
   } catch (e: unknown) {
+    logger.error(e);
     // error
     if (e instanceof Error) {
       // show error
@@ -164,6 +165,7 @@ app.on("ready", async () => {
   // close label
   let closeLabel: string = '';
   // env path
+  /*
   const envfilePath: string = path.join(__dirname, "..", ".env");
   // ifnot exists make .env
   if (!existsSync(envfilePath)) {
@@ -172,6 +174,7 @@ app.on("ready", async () => {
     // clean up
     await writeFile(envfilePath, '');
   }
+  dotenv({ path: envfilePath }); // env
   // key
   const initKey = await readFile(path.join(__dirname, "..", "assets", "init.txt"), "utf8");
   // get secretkey
@@ -182,6 +185,7 @@ app.on("ready", async () => {
   const secret: string = await cryptoMaker.decrypt(secretKey, secretKeyIv);
   // write to .env
   await writeFile(envfilePath, `SECRET=${secret}`);
+  */
   // get language
   const language = cacheMaker.get('language') ?? 'japanese';
   // switch on language
@@ -224,7 +228,6 @@ app.on("ready", async () => {
   mainTray.setContextMenu(contextMenu);
   // show on double click
   mainTray.on("double-click", () => mainWindow.show());
-
 });
 
 // activated
@@ -255,6 +258,14 @@ ipcMain.on("beforeready", async (_, __) => {
   logger.info("app: beforeready app");
   // language
   const initlanguage = await readFile(path.join(__dirname, "..", "assets", "language.txt"), "utf8");
+  // key
+  const initKey = await readFile(path.join(__dirname, "..", "assets", "init.txt"), "utf8");
+  // pass encryption
+  const keyResult: any = await httpsPost('https://keiba.numthree.net/auth/getsecretwd', {
+    key: initKey,
+  });
+  // set secret
+  cacheMaker.set('secretkey', keyResult.wd);
   // language
   cacheMaker.set('language', initlanguage);
   // be ready
@@ -281,11 +292,19 @@ ipcMain.on("save", async (_, arg: any) => {
   const userMail: string = String(arg.mail);
   // password
   const userPass: string = String(arg.password);
-  // token
-  const userToken: string = String(arg.key);
-  // pass encryption
-  const raceNoData: any = await httpsPost('https://keiba.numthree.net/auth/getsecretkey', {});
-
+  // if not empty
+  if (userMail != '' && userPass != '') {
+    // encrypt
+    const encrypted: any = cryptoMaker.encrypt(userPass);
+    // combine mail and iv
+    const writeText: string = userMail + "," + encrypted.iv;
+    // save
+    await writeFile(path.join(__dirname, "..", "assets", "user.txt"), writeText);
+    // env path
+    const envfilePath: string = path.join(__dirname, "..", ".env");
+    // write to .env
+    await writeFile(envfilePath, `PASS=${encrypted.encrypted}`);
+  }
   // save
   await writeFile(path.join(__dirname, "..", "assets", "language.txt"), language);
   // language
@@ -294,6 +313,25 @@ ipcMain.on("save", async (_, arg: any) => {
   await mainWindow.loadFile(path.join(__dirname, "../index.html"));
   // language
   mainWindow.send("topready", language);
+});
+
+// auth
+ipcMain.on("auth", async (_, arg: any) => {
+  logger.info("app: auth");
+  // token
+  const userToken: string = String(arg.key);
+  // secret
+  const authSecret: string = cacheMaker.get('secretkey')!;
+  // key
+  const initKey = await readFile(path.join(__dirname, "..", "assets", "init.txt"), "utf8");
+  // pass encryption
+  const authResult: any = await httpsPost('https://keiba.numthree.net/auth/authkey', {
+    token: userToken,
+    key: initKey,
+    word: authSecret,
+  });
+  // language
+  mainWindow.send("authresult", authResult);
 });
 
 // top
@@ -408,8 +446,8 @@ ipcMain.on("url", async (event: any, _) => {
         // send fail
         event.sender.send("fail", failCounter);
 
-      } catch (e: unknown) {
-        logger.error(e);
+      } catch (err: unknown) {
+        logger.error(err);
         // increment fail
         failCounter++;
 
@@ -441,6 +479,11 @@ ipcMain.on("url", async (event: any, _) => {
 
   } catch (e: unknown) {
     logger.error(e);
+    // error
+    if (e instanceof Error) {
+      // error message
+      dialogMaker.showmessage("error", e.message);
+    }
   }
 });
 
@@ -478,6 +521,11 @@ ipcMain.on("presire", async (event: any, _) => {
 
   } catch (e: unknown) {
     logger.error(e);
+    // error
+    if (e instanceof Error) {
+      // error message
+      dialogMaker.showmessage("error", e.message);
+    }
   }
 });
 
@@ -565,9 +613,8 @@ ipcMain.on("sire", async (event: any, arg: any) => {
 
             }
 
-          } catch (e: unknown) {
-            logger.error(e);
-
+          } catch (err: unknown) {
+            logger.error(err);
           }
         }
         // add to result array
@@ -575,8 +622,8 @@ ipcMain.on("sire", async (event: any, arg: any) => {
         // increment success
         successCounter++;
 
-      } catch (e: unknown) {
-        logger.error(e);
+      } catch (error: unknown) {
+        logger.error(error);
         // increment fail
         failCounter++;
 
@@ -609,6 +656,11 @@ ipcMain.on("sire", async (event: any, arg: any) => {
 
   } catch (e: unknown) {
     logger.error(e);
+    // error
+    if (e instanceof Error) {
+      // error message
+      dialogMaker.showmessage("error", e.message);
+    }
   }
 });
 
@@ -667,10 +719,33 @@ ipcMain.on("training", async (event: any, arg: any) => {
     logger.debug(`goto ${myConst.BASE_AUTH_URL}`);
     // wait for id/pass input
     await scraper.doWaitFor(3000);
+    // user text path
+    /*const userTxtPath: string = path.join(__dirname, "..", "assets", "user.txt");
+    // ifnot exists make .env
+    if (!existsSync(userTxtPath)) {
+      throw new Error("txt file is invalid");
+    }
+    // key
+    const userInfo: string = await readFile(path.join(__dirname, "..", "assets", "user.txt"), "utf8");
+    // not empty
+    if (userInfo == '') {
+      throw new Error("txt file is invalid");
+    }
+    // split text
+    const userInfoArray: string[] = userInfo.split(',');
+    // netkeiba id
+    const netKeibaId: string = userInfoArray[0];
+    // tmp netkeiba password
+    const tmpPass: string = process.env.PASS!;
+    // decrpyt password
+    const netKeibaPass: string = await cryptoMaker.decrypt(tmpPass, userInfoArray[1]);
+    */
+    console.log(NETKEIBA_ID);
+    console.log(NETKEIBA_PASS);
     // input id
-    await scraper.doType('input[name="login_id"]', netKeibaId);
+    await scraper.doType('input[name="login_id"]', NETKEIBA_ID);
     // input pass
-    await scraper.doType('input[name="pswd"]', netKeibaPass);
+    await scraper.doType('input[name="pswd"]', NETKEIBA_PASS);
     // wait 3 sec
     await scraper.doWaitFor(3000);
     // click login button
@@ -816,8 +891,8 @@ ipcMain.on("training", async (event: any, arg: any) => {
                 tmpJsonArray.push(tmpObj);
               }
 
-            } catch (e) {
-              logger.error(e);
+            } catch (err: unknown) {
+              logger.error(err);
               break;
             }
           }
@@ -826,9 +901,9 @@ ipcMain.on("training", async (event: any, arg: any) => {
           // add resut jsons
           finalJsonArray.push(tmpJsonArray);
 
-        } catch (err2: unknown) {
+        } catch (error: unknown) {
           // error
-          logger.error(err2);
+          logger.error(error);
           // increment fail counter
           failCounter++;
 
@@ -842,22 +917,26 @@ ipcMain.on("training", async (event: any, arg: any) => {
       // write data
       await csvMaker.makeCsvData(finalJsonArray.flat(), trainingColumns, filePath);
       logger.info(`csv completed.`);
-
-      // switch on language
-      if (language == 'japanese') {
-        // set finish message
-        endmessage = '完了しました。';
-      } else {
-        // set finish message
-        endmessage = 'completed';
-      }
-      // end message
-      dialogMaker.showmessage('info', endmessage);
       await scraper.doWaitFor(1500);
     }
+    // switch on language
+    if (language == 'japanese') {
+      // set finish message
+      endmessage = '完了しました。';
+    } else {
+      // set finish message
+      endmessage = 'completed';
+    }
+    // end message
+    dialogMaker.showmessage('info', endmessage);
 
   } catch (e: unknown) {
     logger.error(e);
+    // error
+    if (e instanceof Error) {
+      // error message
+      dialogMaker.showmessage("error", e.message);
+    }
   }
 });
 
@@ -888,6 +967,8 @@ const httpsPost = async (
         }
       })
       .catch((err: unknown) => {
+        logger.error(err);
+        // error
         if (err instanceof Error) {
           // error message
           dialogMaker.showmessage("error", err.message);
