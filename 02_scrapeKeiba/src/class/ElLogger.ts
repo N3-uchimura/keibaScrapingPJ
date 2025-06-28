@@ -8,9 +8,6 @@
 
 'use strict';
 
-//* Constants
-import { myConst } from '../consts/globalvariables';
-
 // define modules
 import * as path from 'path'; // path
 import { app } from 'electron'; // electron
@@ -19,12 +16,12 @@ import logger from 'electron-log'; // Logger
 // Logger class
 class ELLogger {
   // construnctor
-  constructor(logname: string, level: any) {
+  constructor(company: any, logname: string, level: any) {
     // log dir path
     const dirpath: string = path.join(
       app.getPath('home'),
-      myConst.COMPANY_NAME,
-      myConst.APP_NAME
+      company,
+      logname
     );
     // Logger config
     const prefix: string = getNowDate(0);

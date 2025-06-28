@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "es2021",
     /* Modules */
     "module": "commonjs",
-    "baseUrl": "./src",
+    "baseUrl": "./",
     "outDir": "./build",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,9 +14,7 @@
     "allowSyntheticDefaultImports": true,
     //"resolveJsonModule": true,
     "paths": {
-      "*": [
-        "../@types/*"
-      ]
+       "*": ["src/*"]
     }
   },
   "include": [
@@ -28,4 +26,8 @@
     ".git",
     ".env"
   ],
+  "files": [
+    "./src/getkeiba.ts",
+    "./src/preload.ts"
+  ]
 }

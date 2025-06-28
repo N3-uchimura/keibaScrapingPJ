@@ -3,7 +3,7 @@
  *
  * Crypto
  * encrypt & decrypt operation
- * updated: 2025/05/18
+ * updated: 2025/06/16
  **/
 
 'use strict';
@@ -14,12 +14,12 @@ import * as crypto from 'node:crypto'; // crypto
 // crypto class
 class Crypto {
   static logger: any; // logger
-  static miku: any; // DiffieHellman instance
+  static pepper: any; // pepper
   static algorithm: string; // algorithm
   static key: string; // key
 
   // construnctor
-  constructor(logger: any, key?: string,) {
+  constructor(logger: any, key?: string, pepper?: string) {
     try {
       // loggeer instance
       Crypto.logger = logger;
@@ -27,8 +27,11 @@ class Crypto {
       Crypto.algorithm = 'aes-256-cbc';
       // secret key
       Crypto.key = key ?? '';
+      // pepper
+      Crypto.pepper = pepper ?? '';
       Crypto.logger.debug('crypto: constructed');
-    } catch (e) {
+
+    } catch (e: unknown) {
       Crypto.logger.error(e);
     }
   }
@@ -37,7 +40,6 @@ class Crypto {
   encrypt = async (plain: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: encrypt started.');
         // make salt
         const iv: Buffer = crypto.randomBytes(16);
         // make cipher
@@ -49,14 +51,16 @@ class Crypto {
         // make encrypt
         const encrypted: any =
           cipher.update(plain, 'utf8', 'base64') + cipher.final('base64');
-        // return result
+        // encrypt result
         const ivWithEncrypted: any = {
           iv: iv.toString('base64'),
           encrypted: encrypted
         };
+        // return result
         resolve(ivWithEncrypted);
         Crypto.logger.debug('crypto: encrypt finished.');
-      } catch (e) {
+
+      } catch (e: unknown) {
         Crypto.logger.error(e);
         reject('error');
       }
@@ -67,9 +71,8 @@ class Crypto {
   decrypt = async (encrypted: string, iv: string): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: decrypt started.');
         // make query
-        const decipher = crypto.createDecipheriv(
+        const decipher: any = crypto.createDecipheriv(
           Crypto.algorithm,
           Buffer.from(Crypto.key),
           Buffer.from(iv, 'base64')
@@ -80,7 +83,8 @@ class Crypto {
         // return result
         resolve(decrypted);
         Crypto.logger.debug('crypto: decrypt finished.');
-      } catch (e) {
+
+      } catch (e: unknown) {
         Crypto.logger.error(e);
         reject('error');
       }
@@ -91,7 +95,6 @@ class Crypto {
   random = async (length: number): Promise<string> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: random started.');
         // return random text
         resolve(
           crypto
@@ -99,7 +102,8 @@ class Crypto {
             .reduce((p, i) => p + (i % 36).toString(36), '')
         );
         Crypto.logger.debug('crypto: random finished.');
-      } catch (e) {
+
+      } catch (e: unknown) {
         Crypto.logger.error(e);
         reject('error');
       }
@@ -107,15 +111,14 @@ class Crypto {
   };
 
   // genPassword
-  genPassword = async (password: string, pepper: string): Promise<any> => {
+  genPassword = async (password: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: generate password started.');
         // make query
         const salt: string = crypto.randomBytes(32).toString('hex');
         // return random text
         const genHash: string = crypto
-          .pbkdf2Sync(password + pepper, salt, 10000, 64, 'sha512')
+          .pbkdf2Sync(password + Crypto.pepper, salt, 10000, 64, 'sha512')
           .toString('hex');
         // return hash&salt
         resolve({
@@ -123,7 +126,8 @@ class Crypto {
           hash: genHash
         });
         Crypto.logger.debug('crypto: generate password finished.');
-      } catch (e) {
+
+      } catch (e: unknown) {
         Crypto.logger.error(e);
         reject('error');
       }
@@ -139,7 +143,6 @@ class Crypto {
   ): Promise<boolean> => {
     return new Promise((resolve, reject) => {
       try {
-        Crypto.logger.debug('crypto: validate password started.');
         // make query
         const checkHash: string = crypto
           .pbkdf2Sync(password + pepper, salt, 10000, 64, 'sha512')
@@ -147,7 +150,8 @@ class Crypto {
         // validate
         resolve(hash === checkHash);
         Crypto.logger.debug('crypto: validate password finished.');
-      } catch (e) {
+
+      } catch (e: unknown) {
         Crypto.logger.error(e);
         reject('error');
       }

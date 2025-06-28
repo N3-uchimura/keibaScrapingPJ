@@ -1,0 +1,46 @@
+/*
+/* index.css
+*/
+
+@charset "utf-8";
+
+body {
+  width: 95%;
+  margin: auto;
+  text-align: center;
+}
+
+h1 {
+  margin: 10px 0;
+  padding: 5px 0;
+  font-size: 1.7rem;
+  color: #fff;
+  background-color: #134A63;
+}
+
+h3 {
+  margin: 10px 0 0;
+  color: #134A63;
+  font-weight: bolder;
+}
+
+p {
+  margin: 10px 0 0;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.operation_area {
+  margin: 30px 0;
+  font-size: 1rem;
+}
+
+.status_area {
+  margin: 30px 0;
+  font-size: 0.8rem;
+}
+
+.operation_area #racingdate {
+  font-size: 0.8rem;
+}

@@ -12,12 +12,14 @@ import { myConst } from './consts/globalvariables';
 // modules
 import * as path from 'node:path'; // path
 import express from 'express'; //express
-import basicAuth from 'basic-auth-connect'; // basic認証
+import basicAuth from 'basic-auth-connect'; // basic auth
 import { config as dotenv } from 'dotenv'; // dotenv
 import helmet from 'helmet'; // helmet
 import Logger from './class/Logger'; // logger
-import { postRaceRouter } from './routes/postraceroutes'; // race router
-import { postAuthRouter } from './routes/postauthroutes'; // auth router
+import { raceRouter } from './routes/raceroutes'; // race router
+import { horseRouter } from './routes/horseroutes'; // horse router
+import { authRouter } from './routes/authroutes'; // auth router
+import { updateRouter } from './routes/updateroutes'; // management router
 import { managementRouter } from './routes/management'; // management router
 
 // dotenv
@@ -38,22 +40,26 @@ app.use(
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-// XSS対策
+// XSS
 app.use(helmet());
 
-// 管理画面用
+// admin
 const adminApp: any = express.Router();
 /// BASIC authorization
 const adminId: string = process.env.ADMIN_ID!; // ID
 const adminPass: string = process.env.ADMIN_PASSWORD!; // password
-// 管理者用
+// admin setting
 adminApp.use(basicAuth(adminId, adminPass));
 
 /// routes
 // race root
-app.use('/race/', postRaceRouter());
+app.use('/race/', raceRouter());
+// horse root
+app.use('/horse/', horseRouter());
 // auth root
-app.use('/auth/', postAuthRouter());
+app.use('/auth/', authRouter());
+// update root
+app.use('/update/', updateRouter());
 // manage auth
 app.use('/manage/', adminApp);
 // manage

@@ -1,7 +1,7 @@
 /**
- * postraceroutes.ts
+ * raceroutes.ts
  *
- * route：racinginfo POST Routing
+ * route：racinginfo Routing
 **/
 
 'use strict';
@@ -20,7 +20,7 @@ const logger = new Logger(myConst.APP_NAME);
 
 /// Router
 // race posing
-export const postRaceRouter = () => {
+export const raceRouter = () => {
   // router
   const router = Router();
 

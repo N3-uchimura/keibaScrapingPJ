@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld(
         } catch (e) {
             console.log(e);
         }
-    }
-}
-);
+    },
+    // open sub window
+    openWindow: () => ipcRenderer.invoke('open-window'),
+});

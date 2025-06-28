@@ -7,11 +7,19 @@
 /** const */
 // default
 export namespace myConst {
+  export const DEV_MODE: boolean = true;
   export const COMPANY_NAME: string = "nthree";
   export const APP_NAME: string = "getKeiba";
   export const LOG_LEVEL: string = "all";
   export const DEFAULT_ENCODING: string = "utf8";
   export const CSV_ENCODING: string = "SJIS";
+  export const FIX_SECRET: string = "Bi8EjFsYmJ";
+  export const WINDOW_WIDTH: number = 1000;
+  export const WINDOW_HEIGHT: number = 1000;
+}
+
+// urls
+export namespace myUrls {
   export const DEF_URL_QUERY: string = "&type=2&rf=shutuba_submenu";
   export const BASE_URL: string = "https://www.netkeiba.com/";
   export const HORSE_BASE_URL: string = "https://db.netkeiba.com/horse/";

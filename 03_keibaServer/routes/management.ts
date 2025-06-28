@@ -14,7 +14,7 @@ import { myConst } from '../consts/globalvariables';
 import * as path from 'node:path'; // path
 import { Router } from 'express'; // express
 import { config as dotenv } from 'dotenv'; // dotenv
-import Crypto from '../class/Crypto0612'; // crypto
+import Crypto from '../class/Crypto0616'; // crypto
 import Logger from '../class/Logger'; // logger
 // SQL
 import { selectAsset, updateData, insertData } from '../modules/mysqlModule';
@@ -35,8 +35,6 @@ export const managementRouter = () => {
   router.get('/', async (_, res) => {
     try {
       logger.info('manage: top');
-      // select from DB
-      const userList: any = selectAsset('user', ['usable'], [[1]], ['id', 'productkey', 'buyed']);
       // key number
       res.render('manage', {});
 

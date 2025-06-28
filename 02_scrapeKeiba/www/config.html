@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <title>Data HorseData Scraper Config</title>
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
-  <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="./css/index.css">
 </head>
 
 <body>
@@ -59,6 +59,7 @@
     const NETKEIBA_MAIL_STR_JA = 'netkeiba メール';
     const NETKEIBA_PASS_STR_JA = 'netkeiba パスワード';
     const PRODUCTKEY_STR_JA = 'プロダクトキー';
+    const PRODUCTKEY_MSG_STR_JA = 'プロダクトキーが空欄です。';
     const ALERT_STR_JA = '※ この情報はサーバに送信されません。';
     const GOTOTOP_STR_JA = 'トップに戻る';
     const SAVE_STR_JA = '保存';
@@ -70,6 +71,7 @@
     const NETKEIBA_MAIL_STR_EN = 'netkeiba mail';
     const NETKEIBA_PASS_STR_EN = 'netkeiba password';
     const PRODUCTKEY_STR_EN = 'product key';
+    const PRODUCTKEY_MSG_STR_N = 'product key is empty.';
     const ALERT_STR_EN = '※ This information will not be sent to our server.';
     const GOTOTOP_STR_EN = 'Goto Top';
     const SAVE_STR_EN = 'Save';
@@ -80,6 +82,7 @@
     const passheadDom = document.getElementById("passhead");
     const mailDom = document.getElementById("mail");
     const passwordDom = document.getElementById("pass");
+    const tokenDom = document.getElementById("token");
     const tokenheadDom = document.getElementById("tokenhead");
     const alertDom = document.getElementById("alert");
     const maintitleDom = document.getElementById("maintitle");
@@ -107,13 +110,22 @@
       try {
         console.log("auth mode");
         // productKey
-        const productKey = languageDom.checked ? 'japanese' : 'english';
-        // obj
-        const sendObj = {
-          key: productKey,
+        if (tokenDom.value == '') {
+          // error message
+          let errMsg = '';
+          // language
+          if (languageDom.checked) {
+            // set japanese
+            errMsg = PRODUCTKEY_MSG_STR_JA;
+          } else {
+            // set english
+            errMsg = PRODUCTKEY_MSG_STR_EN;
+          }
+          // error
+          throw new Error(errMsg);
         }
         // send to main ipc
-        window.api.send("save", sendObj);
+        window.api.send("auth", tokenDom.value);
 
       } catch (e) {
         // error

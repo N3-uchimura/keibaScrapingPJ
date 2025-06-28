@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Data HorseData Scraper</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
+  <link rel="stylesheet" href="./css/scrape.css">
+</head>
+
+<body>
+  <div class="statusarea">
+    <div id="status"></div>
+    <div id="targetpage"></div>
+    <div><span id="place"></span></div>
+    <div><span id="successhead">success:</span><span id="success"></span>/<span id="successtotal"></span></div>
+    <div><span id="failhead">fail:</span><span id="fail"></span>/<span id="failtotal"></span></div>
+  </div>
+
+  <script charset="UTF-8">
+    /// variables
+    let globalfileList = []; // filelist
+    let japaneseFlg = true; // japanese flg
+    /// constants
+    // japanese
+    const APPNAME_STR_JA = '競馬スクレイピングツール';
+    const DATE_STR_JA = '開催日';
+    const GETCROPS_STR_JA = '産駒成績取得';
+    const GETTRAINING_STR_JA = '調教取得';
+    const CONFIG_STR_JA = '設定';
+    const SUCCESS_STR_JA = '成功:';
+    const FAIL_STR_JA = '失敗:';
+    const SELECTCSV_STR_JA = 'CSVファイルを選んでください。';
+    const EXIT_STR_JA = '終了';
+    // english
+    const APPNAME_STR_EN = 'Data HorseData Scraper';
+    const DATE_STR_EN = 'Racing Date';
+    const GETCROPS_STR_EN = 'Get Crop Results';
+    const GETTRAINING_STR_EN = 'Get Trainings';
+    const CONFIG_STR_EN = 'Config';
+    const SUCCESS_STR_JEN = 'success:';
+    const FAIL_STR_EN = 'fail:';
+    const SELECTCSV_STR_EN = 'Select CSV File';
+    const EXIT_STR_EN = 'Exit';
+    // doms
+    const pageDom = document.getElementById('targetpage');
+    const statusDom = document.getElementById('status');
+    const successHeadDom = document.getElementById('successhead');
+    const successDom = document.getElementById('success');
+    const failHeadDom = document.getElementById('failhead');
+    const failDom = document.getElementById('fail');
+    const racePlaceDom = document.getElementById('place');
+    const successtotalDom = document.getElementById('successtotal');
+    const failtotalDom = document.getElementById('failtotal');
+
+    // be ready
+    window.api.on("ready", arg => {
+      // change language
+      changeLanguage(arg);
+    });
+
+    // total
+    window.api.on('total', arg => {
+      // place exists
+      if (arg.place) {
+        // place
+        racePlaceDom.innerHTML = arg.place;
+      }
+      // successtotal
+      successtotalDom.innerHTML = arg.len;
+      // failtotal
+      failtotalDom.innerHTML = arg.len;
+    });
+
+    // update status
+    window.api.on('statusUpdate', arg => {
+      try {
+        // status 
+        statusDom.innerHTML = arg.status;
+        // target
+        pageDom.innerHTML = arg.target;
+
+      } catch (e) {
+        // error
+        console.log(e);
+      }
+    });
+
+    // success
+    window.api.on('success', arg => {
+      // success dom
+      successDom.innerHTML = arg;
+    });
+
+    // fail
+    window.api.on('fail', arg => {
+      // fail dom
+      failDom.innerHTML = arg;
+    });
+
+    // change language
+    const changeLanguage = lang => {
+      // japanese
+      if (lang == 'japanese') {
+        japaneseFlg = true;
+        document.title = APPNAME_STR_JA;
+        maintitleDom.innerHTML = APPNAME_STR_JA;
+        getcropsDom.innerHTML = GETCROPS_STR_JA;
+        getcropsButtonDom.innerHTML = GETCROPS_STR_JA;
+        gettrainingDom.innerHTML = GETTRAINING_STR_JA;
+        gettrainingButtonDom.innerHTML = GETTRAINING_STR_JA;
+        getconfigButtonDom.innerHTML = CONFIG_STR_JA;
+        exitDom.innerHTML = EXIT_STR_JA;
+        successHeadDom.innerHTML = SUCCESS_STR_JA;
+        failHeadDom.innerHTML = FAIL_STR_JA;
+        racingdateDom.innerHTML = DATE_STR_JA;
+        dialogTitleDom.innerHTML = SELECTCSV_STR_JA;
+        document.documentElement.setAttribute("lang", 'ja');
+        // english
+      } else {
+        japaneseFlg = false;
+        document.title = APPNAME_STR_EN;
+        maintitleDom.innerHTML = APPNAME_STR_EN;
+        getcropsDom.innerHTML = GETCROPS_STR_EN;
+        getcropsButtonDom.innerHTML = GETCROPS_STR_EN;
+        gettrainingDom.innerHTML = GETTRAINING_STR_EN;
+        gettrainingButtonDom.innerHTML = GETTRAINING_STR_EN;
+        getconfigButtonDom.innerHTML = CONFIG_STR_EN;
+        exitDom.innerHTML = EXIT_STR_EN;
+        successHeadDom.innerHTML = SUCCESS_STR_EN;
+        failHeadDom.innerHTML = FAIL_STR_EN;
+        racingdateDom.innerHTML = DATE_STR_EN;
+        dialogTitleDom.innerHTML = SELECTCSV_STR_EN;
+        document.documentElement.setAttribute("lang", 'en');
+      }
+    }
+  </script>
+</body>
+
+</html>

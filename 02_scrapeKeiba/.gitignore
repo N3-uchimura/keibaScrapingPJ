@@ -6,3 +6,4 @@ package-lock.json
 /build/
 /csv/
 man.env
+appx_setting.json
