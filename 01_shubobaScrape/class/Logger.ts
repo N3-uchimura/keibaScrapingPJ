@@ -3,19 +3,17 @@
  *
  * name：Logger
  * function：Logging operation
- * updated: 2025/05/17
+ * updated: 2025/05/04
  **/
 
 'use strict';
 
-// namespace
-import { myConst } from '../consts/globalvariables'; // namespace
+//* Constants
+import { myConst } from '../consts/globalvariables';
 
 // define modules
-import * as path from 'node:path'; // path
 import * as log4js from 'log4js'; // Logger
-// re define
-const LOG_LEVEL: string = myConst.LOG_LEVEL ?? 'all';
+import * as path from 'path'; // path
 
 // Logger class
 class Logger {
@@ -27,18 +25,18 @@ class Logger {
   static loggerDir: string;
 
   // construnctor
-  constructor(dirname: string, flg: boolean) {
-    // log4js options
-    let log4jsOptions: any;
+  constructor(dirname: string, level?: string) {
+    try {
 
-    // log mode
-    if (flg) {
-      // home directory path
-      const homeDir: string = process.env[
-        process.platform == 'win32' ? 'USERPROFILE' : 'HOME'
-      ]!;
+
+      // log4js options
+      let log4jsOptions: any;
+      // log level
+      const loglevel: string = level ?? 'all';
+
+      // log mode
       // logger dir path
-      Logger.loggerDir = path.join(homeDir, myConst.COMPANY_NAME, dirname);
+      Logger.loggerDir = path.join(myConst.LOG_PATH, myConst.APP_NAME, dirname);
       // Logger config
       const prefix: string = `${dirname}-${new Date().toJSON().slice(0, 10)}`;
       // set log4js options
@@ -48,28 +46,29 @@ class Logger {
             type: 'dateFile',
             filename: path.join(Logger.loggerDir, `${prefix}.log`)
           },
+          result_raw: {
+            type: 'file',
+            filename: path.join(Logger.loggerDir, `${prefix}_debug.log`)
+          },
+          result: {
+            type: 'logLevelFilter',
+            appender: 'result_raw',
+            level: loglevel
+          },
           out: { type: 'stdout' }
         },
         categories: {
-          default: { appenders: ['out', 'app'], level: LOG_LEVEL }
+          default: { appenders: ['out', 'result', 'app'], level: loglevel }
         }
       };
-    } else {
-      // set log4js options
-      log4jsOptions = {
-        appenders: {
-          out: { type: 'stdout', level: LOG_LEVEL }
-        },
-        categories: {
-          default: { appenders: ['out'], level: LOG_LEVEL }
-        }
-      };
+
+      // logger config
+      log4js.configure(log4jsOptions);
+      // logger instance
+      Logger.logger = log4js.getLogger(); // logger instance
+    } catch (e) {
+      console.log(e);
     }
-    // logger config
-    log4js.configure(log4jsOptions);
-    // logger instance
-    Logger.logger = log4js.getLogger(); // logger instance
-    Logger.logger.level = LOG_LEVEL;
   }
 
   // log info
@@ -97,6 +96,7 @@ class Logger {
     // error
     if (e instanceof Error) {
       // error
+      Logger.logger.error(e.stack);
       Logger.logger.error(e.message);
     }
   };

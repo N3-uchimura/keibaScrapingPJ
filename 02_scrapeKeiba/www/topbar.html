@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Data HorseData Scraper</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline';">
+  <link rel="stylesheet" href="./css/bar.css">
+</head>
+
+<body>
+  <main>
+    <div class="mydict top">
+      <label for="east">
+        <input type="radio" name="tracks" value="1" id="east">
+        <span id="eastlabel"></span>
+      </label>
+      <label for="west">
+        <input type="radio" name="tracks" value="2" id="west">
+        <span id="westlabel"></span>
+      </label>
+      <label for="local">
+        <input type="radio" name="tracks" value="3" id="local">
+        <span id="locallabel"></span>
+      </label>
+    </div>
+  </main>
+  <script charset="UTF-8">
+    // doms
+    const eastlabelDom = document.getElementById('eastlabel');
+    const westlabelDom = document.getElementById('westlabel');
+    const locallabelDom = document.getElementById('locallabel');
+
+    // be ready
+    window.api.on("ready", arg => {
+      console.log(arg);
+      // place
+      eastlabelDom.innerHTML = arg.east;
+      westlabelDom.innerHTML = arg.west;
+      locallabelDom.innerHTML = arg.local;
+    });
+
+  </script>
+</body>
+
+</html>

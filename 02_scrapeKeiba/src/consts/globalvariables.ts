@@ -16,6 +16,8 @@ export namespace myConst {
   export const FIX_SECRET: string = "Bi8EjFsYmJ";
   export const WINDOW_WIDTH: number = 1000;
   export const WINDOW_HEIGHT: number = 1000;
+  export const TOPBAR_HEIGHT: number = 50;
+  export const LEFTBAR_WIDTH: number = 150;
 }
 
 // urls

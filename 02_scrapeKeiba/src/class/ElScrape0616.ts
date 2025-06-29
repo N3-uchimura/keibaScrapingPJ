@@ -3,12 +3,11 @@
  *
  * class：ElScrape
  * function：scraping site
- * updated: 2025/05/31
+ * updated: 2025/06/16
  **/
 
 'use strict';
 
-// consts
 const DISABLE_EXTENSIONS: string = '--disable-extensions'; // disable extension
 const DEF_USER_AGENT: string = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36';
 
@@ -56,8 +55,10 @@ export class Scrape {
         };
         // lauch browser
         Scrape.browser = await puppeteer.launch(puppOptions);
-        // create new page
+        // get all tabs
         Scrape.page = (await Scrape.browser.pages())[0];
+        // set again
+        Scrape.page = Scrape.pages[0];
         // set viewport
         Scrape.page.setViewport({
           width: 1920,
