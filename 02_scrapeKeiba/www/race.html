@@ -18,10 +18,10 @@
     /// ipc
     window.onload = function () {
       // send crops result
-      window.api.send("beready");
+      window.api.send("mainready");
     }
     // be ready
-    window.api.on("ready", arg => {
+    window.api.on("mainready", arg => {
       console.log(arg);
     });
   </script>

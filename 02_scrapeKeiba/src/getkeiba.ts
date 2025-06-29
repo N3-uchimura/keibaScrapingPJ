@@ -12,10 +12,9 @@ import { myConst } from './consts/globalvariables';
 
 /// Modules
 import * as path from 'node:path'; // path
-import { assert } from 'node:console';
 import axios from 'axios'; // http
 import { config as dotenv } from 'dotenv'; // dotenv
-import { BaseWindow, BrowserWindow, WebContentsView, app, ipcMain, Tray, Menu, nativeImage } from 'electron'; // electron
+import { BaseWindow, WebContentsView, app, ipcMain, Tray, Menu, nativeImage } from 'electron'; // electron
 import ELLogger from './class/ElLogger'; // logger
 import Dialog from './class/ElDialog0414'; // dialog
 // env setting
@@ -45,43 +44,6 @@ let isQuiting: boolean;
 const createWindow = (): void => {
   try {
 
-
-    mainView.webContents.on('did-finish-load', () => {
-      // view.webContents.openDevTools({ mode: 'detach' });
-      setupViewLocal('local.html');
-    });
-
-    mainWindow.on('resize', () => {
-      const views = mainWindow.contentView.children;
-      assert(views.length === 3);
-      resizeViews(views[1], views[2]);
-    });
-
-    const template: any = [
-      {
-        label: 'View',
-        submenu: [
-          {
-            label: 'open dev tool',
-            click() {
-              mainWindow.webContents.openDevTools({ mode: 'detach' });
-            }
-          },
-          { role: 'quit' }
-        ]
-      }
-    ];
-    if (!app.isPackaged) {
-      template.unshift({
-        label: 'Debug',
-        submenu: [
-          { role: 'forceReload' }
-        ]
-      });
-    }
-    const menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-
   } catch (e: unknown) {
     logger.error(e);
     // error
@@ -90,31 +52,6 @@ const createWindow = (): void => {
       dialogMaker.showmessage('error', `${e.message}`);
     }
   }
-
-  const setupViewLocal = (file: any) => {
-    const view: any = new WebContentsView({
-      webPreferences: {
-        preload: path.join(__dirname, 'preload.js')
-      }
-    });
-    resizeViews(view);
-    view.webContents.loadFile(file);
-    view.setBackgroundColor('white');
-    mainWindow.contentView.addChildView(view);
-    view.webContents.openDevTools({ mode: 'detach' });
-  }
-
-  const resizeViews = (...views: any) => {
-    const bound = mainWindow.getBounds();
-    const height = process.platform !== 'win32' ? 60 : 40
-    views.forEach((view: any) => view.setBounds({ x: 0, y: height, width: bound.width, height: bound.height - height }));
-  }
-
-  // ready
-  mainWindow.once('ready-to-show', async () => {
-    // dev mode
-    mainWindow.webContents.openDevTools();
-  });
 
   // minimize and stay on tray
   mainWindow.on('minimize', (event: any): void => {
@@ -149,11 +86,11 @@ const createWindow = (): void => {
   // open sub window
   ipcMain.handle('open-window', () => {
     // sub window
-    const subWindow = new BrowserWindow({
-      title: 'Sub Window',
-    });
+    //const subWindow = new BrowserWindow({
+    //  title: 'Sub Window',
+    //});
     // set sub window
-    subWindow.loadFile(path.join(__dirname, '..', 'www', 'terminal.html'));
+    //subWindow.loadFile(path.join(__dirname, '..', 'www', 'terminal.html'));
   });
 };
 
@@ -177,32 +114,54 @@ app.whenReady().then(() => {
   }
   // Electron window
   mainWindow = new BaseWindow(windowOptions);
+
   // mainWindow
   mainView = new WebContentsView({
     webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
       preload: path.join(__dirname, 'preload.js')
     }
   });
-  // set mainview
+  // mainview
+  //mainView.webContents.openDevTools();
   mainView.webContents.loadFile(path.join(__dirname, '..', 'www', 'race.html'));
   mainWindow.contentView.addChildView(mainView);
   // top bar
-  topView = new WebContentsView();
+  // mainWindow
+  topView = new WebContentsView({
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+  //topView.webContents.openDevTools();
   topView.webContents.loadFile(path.join(__dirname, '..', 'www', 'topbar.html'));
   mainWindow.contentView.addChildView(topView);
   // left sidebar
-  leftView = new WebContentsView();
+  // mainWindow
+  leftView = new WebContentsView({
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+  //leftView.webContents.openDevTools();
   leftView.webContents.loadFile(path.join(__dirname, '..', 'www', 'leftbar.html'));
   mainWindow.contentView.addChildView(leftView);
   // set position
   mainView.setBounds({ x: myConst.LEFTBAR_WIDTH + 10, y: myConst.TOPBAR_HEIGHT + 10, width: myConst.WINDOW_WIDTH - myConst.LEFTBAR_WIDTH - 10, height: myConst.WINDOW_HEIGHT - myConst.TOPBAR_HEIGHT - 10 });
   topView.setBounds({ x: 0, y: 0, width: myConst.WINDOW_WIDTH, height: myConst.TOPBAR_HEIGHT });
   leftView.setBounds({ x: 0, y: 0, width: myConst.LEFTBAR_WIDTH, height: myConst.WINDOW_HEIGHT });
+
 });
 
 // ready
 app.on('ready', async () => {
   logger.info('app: electron is ready');
+
   // app icon
   const icon: Electron.NativeImage = nativeImage.createFromPath(
     path.join(__dirname, 'assets', 'keiba128.ico')
@@ -257,6 +216,27 @@ app.on('window-all-closed', () => {
 });
 
 /* IPC */
+// beready
+ipcMain.on('mainready', () => {
+  // be ready
+  console.log('mainready');
+  mainView.webContents.send('mainready', 'main');
+});
+
+// topready
+ipcMain.on('topready', () => {
+  // be ready
+  console.log('topready');
+  topView.webContents.send('topready', 'top');
+});
+
+// leftready
+ipcMain.on('leftready', () => {
+  // be ready
+  console.log('leftready');
+  leftView.webContents.send('leftready', 'left');
+});
+
 // post communication
 const httpsPost = async (
   hostname: string,

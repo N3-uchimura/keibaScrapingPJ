@@ -32,12 +32,21 @@
     const locallabelDom = document.getElementById('locallabel');
 
     // be ready
-    window.api.on("ready", arg => {
+    /*window.api.on("ready", arg => {
       console.log(arg);
       // place
       eastlabelDom.innerHTML = arg.east;
       westlabelDom.innerHTML = arg.west;
       locallabelDom.innerHTML = arg.local;
+    });*/
+    /// ipc
+    window.onload = function () {
+      // send crops result
+      window.api.send("leftready");
+    }
+    // be ready
+    window.api.on("leftready", arg => {
+      console.log(arg);
     });
 
   </script>
