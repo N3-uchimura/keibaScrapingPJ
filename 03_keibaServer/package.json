@@ -1,6 +1,6 @@
 {
   "name": "keiba-server",
-  "version": "0.1.3",
+  "version": "0.1.0",
   "description": "Web server for keiba-app",
   "scripts": {
     "start": "ts-node keibaserver.ts"

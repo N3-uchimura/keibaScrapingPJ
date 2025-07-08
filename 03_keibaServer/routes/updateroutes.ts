@@ -26,11 +26,22 @@ export const updateRouter = () => {
   // router
   const router = Router();
 
-  // get race no
-  router.post('/release', async (req, res) => {
+  // update
+  router.get('/release/:platform/:arch', async (req, res) => {
     try {
-      logger.info('getracingno mode');
-      res.send();
+      logger.info('update mode');
+      // platform
+      const platform: string = req.params.platform;
+      // architecture
+      const arch: string = req.params.arch;
+      // version
+      const version: string = myConst.APP_VERSION;
+      // filename
+      const updatefilename: string = `${myConst.UPDATE_APP_NAME} Setup ${version}.exe`;
+      // file path
+      const updatePath: string = `../update/${platform}/${arch}/${updatefilename}`;
+      // download
+      res.download(updatePath);
 
     } catch (e: unknown) {
       // error

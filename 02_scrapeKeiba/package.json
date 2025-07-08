@@ -1,7 +1,7 @@
 {
   "name": "net.numthree.getkeiba",
   "productName": "getkeiba",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "application for getting keiba data.",
   "main": "build/getkeiba.js",
   "scripts": {
